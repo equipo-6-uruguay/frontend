@@ -11,115 +11,109 @@ Frontend del sistema de tickets construido con React, TypeScript y Vite.
 - **Axios** - Cliente HTTP
 
 ## 📁 Estructura
+# Sistema de Tickets — Frontend
 
+Frontend del sistema de tickets construido con React, TypeScript y Vite.
+
+## Descripción
+
+Esta aplicación es la interfaz cliente del sistema de gestión de tickets. Proporciona autenticación, listado y detalle de tickets, notificaciones en tiempo real y gestión de asignaciones.
+
+## Tecnologías
+
+- React 19
+- TypeScript
+- Vite
+- React Router v7
+- Axios
+
+## Requisitos
+
+- Node.js 18+ (recomendado)
+- npm 9+ o yarn/pnpm
+
+## Instalación
+
+1. Clonar el repositorio y entrar en la carpeta `frontend`.
+2. Instalar dependencias:
+
+```bash
+npm install
+# or
+pnpm install
 ```
+
+## Scripts disponibles (desde `package.json`)
+
+- `npm run dev` — Inicia el servidor de desarrollo (Vite).
+- `npm run build` — Compila TypeScript y genera la build con Vite.
+- `npm run preview` — Previsualiza la build generada.
+- `npm run test` — Ejecuta tests con Vitest.
+- `npm run test:watch` — Ejecuta tests en modo watch.
+- `npm run lint` — Ejecuta ESLint en el proyecto.
+
+Ejemplo rápido:
+
+```bash
+npm run dev
+```
+
+## Estructura del proyecto (resumen)
+
+```text
 src/
-├── api/           # Clientes API (Axios)
-├── components/    # Componentes reutilizables
-├── pages/         # Páginas/Vistas
-├── routes/        # Configuración de rutas
-└── types/         # Tipos TypeScript
+├─ assets/               # Imágenes, fuentes y recursos estáticos
+├─ components/           # Componentes reutilizables y comunes
+│  └─ common/            # Componentes de uso general (LoadingState, EmptyState...)
+├─ context/              # Contextos React (Auth, Notificaciones)
+├─ hooks/                # Hooks personalizados (useFetchOnce, useSSE)
+├─ pages/                # Vistas: auth, tickets, navbar, notifications, assignments
+├─ routes/               # Router y rutas de la app
+├─ services/             # Clientes API (axios), lógica de servicios
+├─ styles/               # CSS global
+└─ test/                 # Tests unitarios y mocks
 ```
 
-## 🔐 Autenticación
+## Rutas principales
 
-El sistema incluye páginas de autenticación modernas:
+- `/login` — Inicio de sesión
+- `/register` — Registro de usuario
+- `/tickets` — Lista de tickets
+- `/tickets/new` — Crear ticket
+- `/tickets/:id` — Detalle de ticket
+- `/notifications` — Notificaciones
+- `/assignments` — Asignaciones
 
-- **`/login`** - Inicio de sesión (email, password)
-- **`/register`** - Registro de usuario (nombre, email, password)
+## Tests
 
-## 🛣️ Rutas principales
+Se usa Vitest junto con Testing Library. Ejecuta:
 
-- `/` → Redirige a `/login`
-- `/login` → Página de inicio de sesión
-- `/register` → Página de registro
-- `/tickets` → Lista de tickets
-- `/tickets/new` → Crear nuevo ticket
-- `/tickets/:id` → Detalle de ticket
-- `/notifications` → Lista de notificaciones
-- `/assignments` → Lista de asignaciones
+```bash
+npm run test
+```
 
-## 🎨 Características de diseño
+Para ejecutar en modo desarrollo (watch):
 
-- Diseño moderno con gradientes y animaciones
-- Fondo animado con efectos de blur
-- Formularios con validación en tiempo real
-- Estados de carga y error
-- Responsive design
-- Transiciones suaves
+```bash
+npm run test:watch
+```
+
+## Lint
+
+```bash
+npm run lint
+```
+
+## Contribuir
+
+1. Crea una rama con un nombre descriptivo.
+2. Asegúrate de que los tests pasan y de ejecutar el linter.
+3. Abre un Pull Request describiendo los cambios.
+
+## Contacto
+
+Para dudas o integraciones con el backend, contacta con el equipo responsable del repo.
 
 ---
 
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Archivo actualizado automáticamente: `README.md`
