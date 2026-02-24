@@ -108,6 +108,8 @@ logs/
 *.github/agents/
 *.github/agents/!iris.agent.md
 *.github/skills
+*.github/instructions
+copilot-instructions.md
 
 TEST_PLAN2.md
 
