@@ -21,7 +21,7 @@ import { useSSE } from '../../hooks/useSSE';
 
 const mockRefreshUnread = vi.fn();
 
-vi.mock('../../context/NotificacionContext', () => ({
+vi.mock('../../context/NotificationContext', () => ({
   useNotifications: () => ({ trigger: 0, refreshUnread: mockRefreshUnread }),
 }));
 

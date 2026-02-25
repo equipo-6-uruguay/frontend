@@ -4,7 +4,7 @@ import TicketForm from "./TicketForm";
 import { ticketApi } from "../../services/ticketApi";
 import { useAuth } from "../../context/AuthContext";
 import type { CreateTicketDTO } from "../../types/ticket";
-import { useNotifications } from "../../context/NotificacionContext";
+import { useNotifications } from "../../context/NotificationContext";
 import "./CreateTicket.css";
 
 const CreateTicket = () => {

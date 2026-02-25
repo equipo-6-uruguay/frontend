@@ -1,8 +1,8 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
-import { notificationsApi } from "../../services/notification";
-import { useNotifications } from "../../context/NotificacionContext";
-import { useAuth } from "../../context/AuthContext";
+import { notificationsApi } from "../../../services/notification";
+import { useNotifications } from "../../../context/NotificationContext";
+import { useAuth } from "../../../context/AuthContext";
 import "./NavBar.css";
 
 const Navbar = () => {
@@ -17,7 +17,7 @@ const Navbar = () => {
     if (!isAuthenticated) return;
     try {
       const notifications = await notificationsApi.getNotifications();
-      const unread = notifications.filter((n) => !n.read).length;
+      const unread = notifications.filter((n: { read: boolean }) => !n.read).length;
       setUnreadCount(unread);
     } catch (error) {
       console.error("Error cargando notificaciones", error);
