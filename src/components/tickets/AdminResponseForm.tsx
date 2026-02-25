@@ -25,7 +25,7 @@ const AdminResponseForm = ({ ticketId, onResponseCreated }: AdminResponseFormPro
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!text.trim() || submitting) return;
 

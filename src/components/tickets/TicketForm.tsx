@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import type { CreateTicketDTO } from '../../types/ticket';
 import './TicketForm.css';
 
@@ -10,7 +10,7 @@ const TicketForm = ({ onSubmit }: Props) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     onSubmit({ title, description });
