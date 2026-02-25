@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useFetch } from '../../hooks/useFetchOnce';
+import { useFetch } from '../../hooks/useFetch';
 import { notificationsApi } from '../../services/notification';
-import { useNotifications } from '../../context/NotificacionContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { LoadingState, EmptyState, PageHeader } from '../../components/common';
-import ConfirmModal from '../../components/ConfirmModal';
-import NotificationItem from './NotificationItem';
+import ConfirmModal from '../../components/ui/ConfirmModal';
+import NotificationItem from '../../components/notifications/NotificationItem';
 import type { Notification } from '../../types/notification';
 import './NotificationList.css';
 

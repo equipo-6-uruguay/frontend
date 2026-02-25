@@ -1,7 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useMatch } from 'react-router-dom';
-import { useSSE } from '../hooks/useSSE';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import Navbar from '../pages/navbar/NavBar';
 import TicketList from '../pages/tickets/TicketList';
 import CreateTicket from '../pages/tickets/CreateTicket';
 import TicketDetail from '../pages/tickets/TicketDetail';
@@ -9,37 +7,8 @@ import NotificationList from '../pages/notifications/NotificationList';
 import AssignmentList from '../pages/assignments/AssignmentList';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
-import ProtectedRoute from '../components/ProtectedRoute';
-import { useAuth } from '../context/AuthContext';
-
-/**
- * Monta la conexión SSE global para actualizar el badge de notificaciones.
- * Solo se activa en rutas autenticadas y cuando el usuario NO está en
- * TicketDetail (esa ruta ya abre su propia conexión SSE con callback de
- * refresco de respuestas), garantizando una única conexión EventSource.
- */
-const SSEGlobalListener = () => {
-  useSSE();
-  return null;
-};
-
-const Layout = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
-  // useMatch devuelve un objeto si la ruta actual coincide con el patrón.
-  const isTicketDetail = Boolean(useMatch('/tickets/:id'));
-  const { isAuthenticated } = useAuth();
-  const showProtectedUI = !isAuthPage && isAuthenticated;
-
-  return (
-    <>
-      {showProtectedUI && <Navbar />}
-      {/* SSE global: solo en rutas autenticadas que no sean TicketDetail */}
-      {showProtectedUI && !isTicketDetail && <SSEGlobalListener />}
-      {children}
-    </>
-  );
-};
+import ProtectedRoute from '../components/auth/ProtectedRoute';
+import Layout from '../components/layout/Layout';
 
 const AppRouter = () => {
   return (

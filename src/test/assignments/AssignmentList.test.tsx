@@ -44,10 +44,10 @@ vi.mock('../../components/common', () => ({
 }));
 
 // Mock de componentes secundarios
-vi.mock('../../components/TicketAssign', () => ({
+vi.mock('../../components/tickets/TicketAssign', () => ({
   default: () => <div data-testid="ticket-assign" />,
 }));
-vi.mock('../../components/ConfirmModal', () => ({
+vi.mock('../../components/ui/ConfirmModal', () => ({
   default: () => <div data-testid="confirm-modal" />,
 }));
 

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { useNotifications } from '../context/NotificacionContext';
+import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 
 // ---------------------------------------------------------------------------

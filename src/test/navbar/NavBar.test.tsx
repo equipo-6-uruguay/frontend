@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import NavBar from '../../pages/navbar/NavBar';
+import NavBar from '../../components/layout/Navbar/NavBar';
 import { notificationsApi } from '../../services/notification';
 import type { User } from '../../types/auth';
 
@@ -16,7 +16,7 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('../../context/NotificacionContext', () => ({
+vi.mock('../../context/NotificationContext', () => ({
   useNotifications: vi.fn(),
 }));
 
@@ -29,7 +29,7 @@ vi.mock('../../services/notification', () => ({
 
 // Import de los hooks mockeados para poder modificarlos en cada test
 import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificacionContext';
+import { useNotifications } from '../../context/NotificationContext';
 
 // Helper para crear un mock user completo
 const createMockUser = (overrides: Partial<User> = {}): User => ({

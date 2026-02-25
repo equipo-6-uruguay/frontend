@@ -61,8 +61,8 @@ let refreshPromise: Promise<void> | null = null;
  * Uses raw axios to avoid interceptor loops.
  */
 const refreshAuthCookie = async (): Promise<void> => {
-  const usersBase = import.meta.env.VITE_USERS_SERVICE_URL ?? 'http://localhost:8003/api';
-  await axios.post(`${usersBase}/auth/refresh/`, {}, { withCredentials: true });
+  const usersBaseURL = import.meta.env.VITE_USERS_SERVICE_URL ?? 'http://localhost:8003/api';
+  await axios.post(`${usersBaseURL}/auth/refresh/`, {}, { withCredentials: true });
 };
 /**
  * Attach request/response interceptors to an axios client.

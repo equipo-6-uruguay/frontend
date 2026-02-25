@@ -5,9 +5,9 @@ import { userService } from '../../services/user';
 import { LoadingState, EmptyState, PageHeader } from '../../components/common';
 import type { Assignment } from '../../types/assignment';
 import type { TicketPriority } from '../../types/ticket';
-import { formatPriority } from '../tickets/priorityUtils';
-import TicketAssign from '../../components/TicketAssign';
-import ConfirmModal from '../../components/ConfirmModal';
+import { formatPriority } from '../../domain/tickets/priorityUtils';
+import TicketAssign from '../../components/tickets/TicketAssign';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 import './AssignmentList.css';
 
 /**

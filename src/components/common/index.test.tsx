@@ -58,7 +58,7 @@ describe('PageHeader', () => {
 
   it('applies correct CSS classes', () => {
     const { container } = render(<PageHeader title="Title" />);
-    expect(container.querySelector('.page-header')).toBeInTheDocument();
-    expect(container.querySelector('.page-title')).toBeInTheDocument();
+    expect(container.querySelector('.list-header')).toBeInTheDocument();
+    expect(container.querySelector('h1')).toBeInTheDocument();
   });
 });

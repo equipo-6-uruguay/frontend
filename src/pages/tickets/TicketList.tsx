@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { ticketApi } from '../../services/ticketApi';
 import { useAuth } from '../../context/AuthContext';
 import type { Ticket, TicketPriority } from '../../types/ticket';
-import TicketItem from './TicketItem';
-import ConfirmModal from '../../components/ConfirmModal';
+import TicketItem from '../../components/tickets/TicketItem';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 import { LoadingState, EmptyState, PageHeader } from '../../components/common';
 import './TicketList.css';
 
