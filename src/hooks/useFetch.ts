@@ -63,16 +63,3 @@ export const useFetch = <T,>(
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 };
 
-/**
- * Hook alternativo simple para casos onde no necesitas manejar errores.
- * Mantiene compatibilidad con código anterior.
- *
- * @deprecated Usa `useFetch` directamente para mejor control
- */
-export const useFetchOnce = (callback: () => void | Promise<void>) => {
-  useFetch(
-    (signal) => Promise.resolve(callback()),
-    () => {},
-    () => {}
-  );
-};
