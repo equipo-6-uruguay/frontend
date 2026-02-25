@@ -92,7 +92,7 @@ const makeTicket = (overrides: Partial<Ticket> = {}): Ticket => ({
   status: 'OPEN',
   user_id: '99',
   created_at: '2026-02-20T09:00:00Z',
-  priority: 'UNASSIGNED',
+  priority: 'Unassigned',
   priority_justification: null,
   ...overrides,
 });
@@ -110,8 +110,8 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
   // ── Test 1 ──────────────────────────────────────────────────────────────
   describe('1. ADMIN + OPEN → cambia a HIGH y la UI actualiza', () => {
     it('llama a ticketApi.updatePriority con la prioridad seleccionada', async () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
-      const updatedTicket: Ticket = { ...ticket, priority: 'HIGH' };
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
+      const updatedTicket: Ticket = { ...ticket, priority: 'High' };
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
@@ -120,7 +120,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
 
       // El selector de prioridad debe estar visible para ADMIN
       const select = screen.getByRole('combobox', { name: /prioridad/i });
-      await userEvent.selectOptions(select, 'HIGH');
+      await userEvent.selectOptions(select, 'High');
 
       const submitBtn = screen.getByRole('button', { name: /guardar/i });
       await userEvent.click(submitBtn);
@@ -128,14 +128,14 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       await waitFor(() => {
         expect(ticketApiModule.ticketApi.updatePriority).toHaveBeenCalledWith(
           42,
-          expect.objectContaining({ priority: 'HIGH' })
+          expect.objectContaining({ priority: 'High' })
         );
       });
     });
 
     it('llama a onUpdate con el ticket actualizado tras respuesta exitosa', async () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
-      const updatedTicket: Ticket = { ...ticket, priority: 'HIGH' };
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
+      const updatedTicket: Ticket = { ...ticket, priority: 'High' };
       const onUpdate = vi.fn();
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
@@ -144,7 +144,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       render(<TicketPriorityManager ticket={ticket} onUpdate={onUpdate} />);
 
       const select = screen.getByRole('combobox', { name: /prioridad/i });
-      await userEvent.selectOptions(select, 'HIGH');
+      await userEvent.selectOptions(select, 'High');
 
       await userEvent.click(screen.getByRole('button', { name: /guardar/i }));
 
@@ -157,7 +157,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
   // ── Test 2 ──────────────────────────────────────────────────────────────
   describe('2. ADMIN + prioridad MEDIUM intenta volver a UNASSIGNED → bloqueado', () => {
     it('no expone UNASSIGNED como opción disponible si la prioridad actual no es UNASSIGNED', () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'MEDIUM' });
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Medium' });
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
 
@@ -168,11 +168,11 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
         (o) => (o as HTMLOptionElement).value
       );
 
-      expect(optionValues).not.toContain('UNASSIGNED');
+      expect(optionValues).not.toContain('Unassigned');
     });
 
     it('no llama a ticketApi.updatePriority si se intenta forzar UNASSIGNED con otra prioridad activa', async () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'MEDIUM' });
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Medium' });
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(ticket);
@@ -181,7 +181,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
 
       // Intentar forzar el valor UNASSIGNED mediante fireEvent (bypass del DOM)
       const select = screen.getByRole('combobox', { name: /prioridad/i });
-      fireEvent.change(select, { target: { value: 'UNASSIGNED' } });
+      fireEvent.change(select, { target: { value: 'Unassigned' } });
 
       await userEvent.click(screen.getByRole('button', { name: /guardar/i }));
 
@@ -192,7 +192,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
   // ── Test 3 ──────────────────────────────────────────────────────────────
   describe('3. USER normal no puede gestionar la prioridad', () => {
     it('no renderiza el control de prioridad para un usuario con rol USER', () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
 
       mockUseAuth({ user: regularUser, isAuthenticated: true, isAdmin: false });
 
@@ -204,7 +204,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     });
 
     it('no renderiza el botón guardar para un usuario con rol USER', () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
 
       mockUseAuth({ user: regularUser, isAuthenticated: true, isAdmin: false });
 
@@ -216,7 +216,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     });
 
     it('no renderiza el control de prioridad cuando no hay usuario autenticado', () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
 
       mockUseAuth({ user: null, isAuthenticated: false, isAdmin: false });
 
@@ -231,7 +231,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
   // ── Test 4 ──────────────────────────────────────────────────────────────
   describe('4. Ticket CLOSED bloquea el cambio de prioridad', () => {
     it('no renderiza el control de prioridad si el ticket está CLOSED', () => {
-      const ticket = makeTicket({ status: 'CLOSED', priority: 'LOW' });
+      const ticket = makeTicket({ status: 'CLOSED', priority: 'Low' });
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
 
@@ -243,7 +243,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     });
 
     it('no renderiza el botón guardar si el ticket está CLOSED', () => {
-      const ticket = makeTicket({ status: 'CLOSED', priority: 'LOW' });
+      const ticket = makeTicket({ status: 'CLOSED', priority: 'Low' });
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
 
@@ -255,7 +255,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     });
 
     it('no llama a ticketApi.updatePriority cuando el ticket está CLOSED', () => {
-      const ticket = makeTicket({ status: 'CLOSED', priority: 'LOW' });
+      const ticket = makeTicket({ status: 'CLOSED', priority: 'Low' });
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
 
@@ -268,10 +268,10 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
   // ── Test 5 ──────────────────────────────────────────────────────────────
   describe('5. Cambio con justificación → se envía en la petición y se notifica al padre', () => {
     it('incluye la justificación en el payload cuando se rellena el campo', async () => {
-      const ticket = makeTicket({ status: 'IN_PROGRESS', priority: 'LOW' });
+      const ticket = makeTicket({ status: 'IN_PROGRESS', priority: 'Low' });
       const updatedTicket: Ticket = {
         ...ticket,
-        priority: 'HIGH',
+        priority: 'High',
         priority_justification: 'Impacta a cliente VIP',
       };
 
@@ -282,7 +282,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       render(<TicketPriorityManager ticket={ticket} onUpdate={onUpdate} />);
 
       const select = screen.getByRole('combobox', { name: /prioridad/i });
-      await userEvent.selectOptions(select, 'HIGH');
+      await userEvent.selectOptions(select, 'High');
 
       const justificationInput = screen.getByRole('textbox', {
         name: /justificaci[oó]n/i,
@@ -293,17 +293,17 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
 
       await waitFor(() => {
         expect(ticketApiModule.ticketApi.updatePriority).toHaveBeenCalledWith(42, {
-          priority: 'HIGH',
+          priority: 'High',
           justification: 'Impacta a cliente VIP',
         });
       });
     });
 
     it('notifica al padre con la justificación incluida en el ticket actualizado', async () => {
-      const ticket = makeTicket({ status: 'IN_PROGRESS', priority: 'LOW' });
+      const ticket = makeTicket({ status: 'IN_PROGRESS', priority: 'Low' });
       const updatedTicket: Ticket = {
         ...ticket,
-        priority: 'HIGH',
+        priority: 'High',
         priority_justification: 'Impacta a cliente VIP',
       };
 
@@ -314,7 +314,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       render(<TicketPriorityManager ticket={ticket} onUpdate={onUpdate} />);
 
       const select = screen.getByRole('combobox', { name: /prioridad/i });
-      await userEvent.selectOptions(select, 'HIGH');
+      await userEvent.selectOptions(select, 'High');
 
       const justificationInput = screen.getByRole('textbox', {
         name: /justificaci[oó]n/i,
@@ -336,8 +336,8 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
   // ── Test 6 ──────────────────────────────────────────────────────────────
   describe('6. Cambio sin justificación → funciona correctamente', () => {
     it('llama a updatePriority sin campo justification cuando el textarea está vacío', async () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
-      const updatedTicket: Ticket = { ...ticket, priority: 'LOW' };
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
+      const updatedTicket: Ticket = { ...ticket, priority: 'Low' };
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
@@ -346,21 +346,21 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       render(<TicketPriorityManager ticket={ticket} onUpdate={onUpdate} />);
 
       const select = screen.getByRole('combobox', { name: /prioridad/i });
-      await userEvent.selectOptions(select, 'LOW');
+      await userEvent.selectOptions(select, 'Low');
 
       // No rellenar justificación
       await userEvent.click(screen.getByRole('button', { name: /guardar/i }));
 
       await waitFor(() => {
         expect(ticketApiModule.ticketApi.updatePriority).toHaveBeenCalledWith(42, {
-          priority: 'LOW',
+          priority: 'Low',
         });
       });
     });
 
     it('llama a onUpdate con el ticket actualizado aunque no haya justificación', async () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
-      const updatedTicket: Ticket = { ...ticket, priority: 'LOW' };
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
+      const updatedTicket: Ticket = { ...ticket, priority: 'Low' };
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
@@ -369,7 +369,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       render(<TicketPriorityManager ticket={ticket} onUpdate={onUpdate} />);
 
       const select = screen.getByRole('combobox', { name: /prioridad/i });
-      await userEvent.selectOptions(select, 'LOW');
+      await userEvent.selectOptions(select, 'Low');
 
       await userEvent.click(screen.getByRole('button', { name: /guardar/i }));
 
@@ -382,7 +382,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
   // ── Test 7 ──────────────────────────────────────────────────────────────
   describe('7. Manejo de errores HTTP 400 y 403', () => {
     it('muestra un div de error rojo (role=alert) cuando updatePriority responde 403', async () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
       const axiosError = Object.assign(new Error('Forbidden'), {
         response: { status: 403 },
       });
@@ -394,7 +394,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
 
       await userEvent.selectOptions(
         screen.getByRole('combobox', { name: /prioridad/i }),
-        'HIGH'
+        'High'
       );
       await userEvent.click(screen.getByRole('button', { name: /guardar/i }));
 
@@ -406,7 +406,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     });
 
     it('muestra un div de error rojo (role=alert) cuando updatePriority responde 400', async () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
       const axiosError = Object.assign(new Error('Bad Request'), {
         response: { status: 400 },
       });
@@ -418,7 +418,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
 
       await userEvent.selectOptions(
         screen.getByRole('combobox', { name: /prioridad/i }),
-        'HIGH'
+        'High'
       );
       await userEvent.click(screen.getByRole('button', { name: /guardar/i }));
 
@@ -428,8 +428,8 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     });
 
     it('no muestra div de error cuando la operación es exitosa', async () => {
-      const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
-      const updatedTicket: Ticket = { ...ticket, priority: 'HIGH' };
+      const ticket = makeTicket({ status: 'OPEN', priority: 'Unassigned' });
+      const updatedTicket: Ticket = { ...ticket, priority: 'High' };
 
       mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
@@ -438,7 +438,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
 
       await userEvent.selectOptions(
         screen.getByRole('combobox', { name: /prioridad/i }),
-        'HIGH'
+        'High'
       );
       await userEvent.click(screen.getByRole('button', { name: /guardar/i }));
 

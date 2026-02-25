@@ -25,6 +25,20 @@ vi.mock('../../context/NotificationContext', () => ({
   useNotifications: () => ({ trigger: 0, refreshUnread: mockRefreshUnread }),
 }));
 
+// useSSE now calls useAuth() to get the user context for authentication
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: '1', username: 'admin', email: 'admin@test.com', role: 'ADMIN', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+    isAuthenticated: true,
+    isAdmin: true,
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    refreshUser: vi.fn(),
+  }),
+}));
+
 // ---------------------------------------------------------------------------
 // Instala/desinstala el mock de EventSource automáticamente en cada test
 // ---------------------------------------------------------------------------

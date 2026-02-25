@@ -1,4 +1,4 @@
-import type { User } from '../types/auth';
+
 import { usersApiClient } from './axiosConfig';
 
 export interface AdminUser {
