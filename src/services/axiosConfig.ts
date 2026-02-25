@@ -9,7 +9,7 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 }
 /** Client for ticket-service */
 export const ticketApiClient = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_TICKET_SERVICE_URL ?? 'http://localhost:8000/api',
   timeout: 10000,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
@@ -17,7 +17,7 @@ export const ticketApiClient = axios.create({
 
 /** Client for notification-service */
 export const notificationApiClient = axios.create({
-  baseURL: 'http://localhost:8001/api',
+  baseURL: import.meta.env.VITE_NOTIFICATION_SERVICE_URL ?? 'http://localhost:8001/api',
   timeout: 10000,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
@@ -25,7 +25,7 @@ export const notificationApiClient = axios.create({
 
 /** Client for assignment-service */
 export const assignmentApiClient = axios.create({
-  baseURL: 'http://localhost:8002/api',
+  baseURL: import.meta.env.VITE_ASSIGNMENT_SERVICE_URL ?? 'http://localhost:8002/api',
   timeout: 10000,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
@@ -33,7 +33,7 @@ export const assignmentApiClient = axios.create({
 
 /** Client for users-service */
 export const usersApiClient = axios.create({
-  baseURL: 'http://localhost:8003/api',
+  baseURL: import.meta.env.VITE_USERS_SERVICE_URL ?? 'http://localhost:8003/api',
   timeout: 10000,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
@@ -61,7 +61,8 @@ let refreshPromise: Promise<void> | null = null;
  * Uses raw axios to avoid interceptor loops.
  */
 const refreshAuthCookie = async (): Promise<void> => {
-  await axios.post('http://localhost:8003/api/auth/refresh/', {}, { withCredentials: true });
+  const usersBase = import.meta.env.VITE_USERS_SERVICE_URL ?? 'http://localhost:8003/api';
+  await axios.post(`${usersBase}/auth/refresh/`, {}, { withCredentials: true });
 };
 /**
  * Attach request/response interceptors to an axios client.
