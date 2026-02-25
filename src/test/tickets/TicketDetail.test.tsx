@@ -639,6 +639,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
         expect(ticketApi.createResponse).toHaveBeenCalledWith(
           42,
           'Esta es la nueva respuesta del admin',
+          'admin-001',
         );
       });
     });

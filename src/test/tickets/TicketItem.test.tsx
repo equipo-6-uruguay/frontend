@@ -55,35 +55,35 @@ describe('TicketItem – visualización de prioridad (HU-1.2)', () => {
     expect(screen.getByText('Unassigned')).toBeInTheDocument();
   });
 
-  it('muestra "High" cuando priority === "HIGH"', () => {
-    const ticketWithPriority: Ticket = { ...baseTicket, priority: 'HIGH' as TicketPriority };
+  it('muestra "Alta" cuando priority === "High"', () => {
+    const ticketWithPriority: Ticket = { ...baseTicket, priority: 'High' as TicketPriority };
 
     renderTicketItem(ticketWithPriority);
 
-    expect(screen.getByText('High')).toBeInTheDocument();
+    expect(screen.getByText('Alta')).toBeInTheDocument();
   });
 
-  it('muestra "Low" cuando priority === "LOW"', () => {
-    const ticketWithPriority: Ticket = { ...baseTicket, priority: 'LOW' as TicketPriority };
+  it('muestra "Baja" cuando priority === "Low"', () => {
+    const ticketWithPriority: Ticket = { ...baseTicket, priority: 'Low' as TicketPriority };
 
     renderTicketItem(ticketWithPriority);
 
-    expect(screen.getByText('Low')).toBeInTheDocument();
+    expect(screen.getByText('Baja')).toBeInTheDocument();
   });
 
-  it('muestra "Medium" cuando priority === "MEDIUM"', () => {
-    const ticketWithPriority: Ticket = { ...baseTicket, priority: 'MEDIUM' as TicketPriority };
+  it('muestra "Media" cuando priority === "Medium"', () => {
+    const ticketWithPriority: Ticket = { ...baseTicket, priority: 'Medium' as TicketPriority };
 
     renderTicketItem(ticketWithPriority);
 
-    expect(screen.getByText('Medium')).toBeInTheDocument();
+    expect(screen.getByText('Media')).toBeInTheDocument();
   });
 
-  it('muestra "Unassigned" cuando priority === "UNASSIGNED"', () => {
-    const ticketWithPriority: Ticket = { ...baseTicket, priority: 'UNASSIGNED' as TicketPriority };
+  it('muestra "Sin prioridad" cuando priority === "Unassigned"', () => {
+    const ticketWithPriority: Ticket = { ...baseTicket, priority: 'Unassigned' as TicketPriority };
 
     renderTicketItem(ticketWithPriority);
 
-    expect(screen.getByText('Unassigned')).toBeInTheDocument();
+    expect(screen.getByText('Sin prioridad')).toBeInTheDocument();
   });
 });

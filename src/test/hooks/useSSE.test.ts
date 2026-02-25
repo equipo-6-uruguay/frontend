@@ -68,7 +68,7 @@ describe('useSSE — HU-2.2: Conexión SSE de notificaciones', () => {
     renderHook(() => useSSE());
 
     const url = MockEventSource.latest().url;
-    expect(url).toMatch(/\/notifications\/stream\//);
+    expect(url).toMatch(/\/api\/notifications\/sse\//);
   });
 
   it('cierra la conexión EventSource al desmontar el hook', () => {
@@ -80,7 +80,7 @@ describe('useSSE — HU-2.2: Conexión SSE de notificaciones', () => {
   });
 
   it('registra el handler de onerror sin lanzar excepciones', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
 
     const { unmount } = renderHook(() => useSSE());
 
