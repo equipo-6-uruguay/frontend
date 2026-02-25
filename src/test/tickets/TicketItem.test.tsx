@@ -7,7 +7,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import TicketItem from '../../pages/tickets/TicketItem';
+import TicketItem from '../../components/tickets/TicketItem';
 import type { Ticket, TicketPriority } from '../../types/ticket';
 
 // Mock AuthContext — TicketItem uses useAuth() for role checks

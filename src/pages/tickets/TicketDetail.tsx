@@ -6,9 +6,9 @@ import type { User } from '../../types/auth';
 import type { Ticket, TicketResponse } from '../../types/ticket';
 import { useTicketDetail } from '../../hooks/useTicketDetail';
 import { useSSE } from '../../hooks/useSSE';
-import AdminResponseForm from './AdminResponseForm';
+import AdminResponseForm from '../../components/tickets/AdminResponseForm';
 import { formatPriority } from '../../domain/tickets/priorityUtils';
-import TicketPriorityManager from './TicketPriorityManager';
+import TicketPriorityManager from '../../components/tickets/TicketPriorityManager';
 import './TicketDetail.css';
 
 // ---------------------------------------------------------------------------

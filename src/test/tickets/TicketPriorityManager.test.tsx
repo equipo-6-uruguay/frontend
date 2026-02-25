@@ -21,7 +21,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import TicketPriorityManager from '../../pages/tickets/TicketPriorityManager';
+import TicketPriorityManager from '../../components/tickets/TicketPriorityManager';
 import * as ticketApiModule from '../../services/ticketApi';
 import type { Ticket } from '../../types/ticket';
 import type { User } from '../../types/auth';

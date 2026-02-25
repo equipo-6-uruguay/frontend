@@ -4,7 +4,7 @@ import { notificationsApi } from '../../services/notification';
 import { useNotifications } from '../../context/NotificationContext';
 import { LoadingState, EmptyState, PageHeader } from '../../components/common';
 import ConfirmModal from '../../components/ui/ConfirmModal';
-import NotificationItem from './NotificationItem';
+import NotificationItem from '../../components/notifications/NotificationItem';
 import type { Notification } from '../../types/notification';
 import './NotificationList.css';
 
