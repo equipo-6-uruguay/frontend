@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User } from '../types/auth';
+import { usersApiClient } from '../services/axiosConfig';
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +20,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  *
  * Uses HttpOnly cookies for JWT tokens. The browser sends cookies
  * automatically; the frontend never handles tokens directly.
+ *
+ * All API calls go through usersApiClient (axiosConfig) which centralises
+ * base URL, interceptors, and credential handling.
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -26,15 +30,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8003/api/auth/me/', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const userData: User = await response.json();
-        setUser(userData);
-      } else {
-        setUser(null);
-      }
+      const { data } = await usersApiClient.get<User>('/auth/me/');
+      setUser(data);
     } catch {
       setUser(null);
     }
@@ -45,45 +42,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   const login = async (email: string, password: string): Promise<void> => {
-    const response = await fetch('http://localhost:8003/api/auth/login/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
+    const { data } = await usersApiClient.post<{ user: User }>('/auth/login/', {
+      email,
+      password,
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al iniciar sesión');
-    }
-
-    const data = await response.json();
     setUser(data.user);
   };
 
   const register = async (username: string, email: string, password: string): Promise<void> => {
-    const response = await fetch('http://localhost:8003/api/auth/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ username, email, password }),
+    const { data } = await usersApiClient.post<{ user: User }>('/auth/', {
+      username,
+      email,
+      password,
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al registrarse');
-    }
-
-    const data = await response.json();
     setUser(data.user);
   };
 
   const logout = async (): Promise<void> => {
     try {
-      await fetch('http://localhost:8003/api/auth/logout/', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await usersApiClient.post('/auth/logout/');
     } finally {
       setUser(null);
     }
