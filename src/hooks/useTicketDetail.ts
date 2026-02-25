@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ticketApi } from '../../services/ticketApi';
-import { sortByDateAsc } from '../../utils/dateFormat';
-import type { Ticket, TicketResponse } from '../../types/ticket';
+import { ticketApi } from '../services/ticketApi';
+import { sortByDateAsc } from '../utils/dateFormat';
+import type { Ticket, TicketResponse } from '../types/ticket';
 
 interface UseTicketDetailResult {
   ticket: Ticket | null;

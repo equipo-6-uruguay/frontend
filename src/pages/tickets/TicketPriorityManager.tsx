@@ -17,7 +17,7 @@ import {
   isValidPriorityTransition,
   buildPriorityPayload,
   resolvePriorityErrorMessage,
-} from './priorityRules';
+} from '../../domain/tickets/priorityRules';
 import './TicketPriorityManager.css';
 
 interface TicketPriorityManagerProps {

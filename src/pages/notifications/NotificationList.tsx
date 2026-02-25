@@ -3,7 +3,7 @@ import { useFetch } from '../../hooks/useFetch';
 import { notificationsApi } from '../../services/notification';
 import { useNotifications } from '../../context/NotificacionContext';
 import { LoadingState, EmptyState, PageHeader } from '../../components/common';
-import ConfirmModal from '../../components/ConfirmModal';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 import NotificationItem from './NotificationItem';
 import type { Notification } from '../../types/notification';
 import './NotificationList.css';

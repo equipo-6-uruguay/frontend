@@ -2,11 +2,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import type { Ticket, TicketPriority } from '../../types/ticket';
 import { formatDate } from '../../utils/dateFormat';
-import { formatPriority } from './priorityUtils';
+import { formatPriority } from '../../domain/tickets/priorityUtils';
 import {
   canManagePriority,
   ASSIGNABLE_PRIORITY_OPTIONS,
-} from './priorityRules';
+} from '../../domain/tickets/priorityRules';
 import './TicketItem.css';
 
 interface Props {

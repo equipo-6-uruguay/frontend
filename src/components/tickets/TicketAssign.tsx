@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { userService } from '../services/user';
-import type { AdminUser } from '../services/user';
+import { userService } from '../../services/user';
+import type { AdminUser } from '../../services/user';
 import './TicketAssign.css';
 
 interface TicketAssignProps {
