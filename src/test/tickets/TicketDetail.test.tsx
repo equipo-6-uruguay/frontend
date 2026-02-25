@@ -35,6 +35,12 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+// Mock ToastContext — the component uses useToast() for notifications
+export const mockShowToast = vi.fn();
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ showToast: mockShowToast }),
+}));
+
 vi.mock('../../components/common', () => ({
   LoadingState: ({ message }: { message?: string }) => (
     <div data-testid="loading-state">{message || 'Loading...'}</div>
@@ -679,14 +685,15 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       });
     });
 
-    it('muestra confirmación mediante window.alert', async () => {
+    it('muestra confirmación mediante Toast', async () => {
       const user = userEvent.setup();
       renderTicketDetail();
       await fillAndSubmit(user);
 
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalledWith(
+        expect(mockShowToast).toHaveBeenCalledWith(
           expect.stringMatching(/respuesta enviada|respuesta añadida/i),
+          'success'
         );
       });
     });
@@ -703,7 +710,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       vi.mocked(ticketApi.createResponse).mockRejectedValue(new Error('Network Error'));
     });
 
-    it('muestra window.alert con mensaje de error si la API falla', async () => {
+    it('muestra Toast con mensaje de error si la API falla', async () => {
       const user = userEvent.setup();
       renderTicketDetail();
 
@@ -715,8 +722,9 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       await user.click(screen.getByRole('button', { name: /responder/i }));
 
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalledWith(
+        expect(mockShowToast).toHaveBeenCalledWith(
           expect.stringMatching(/error|no se pudo enviar/i),
+          'error'
         );
       });
     });
@@ -734,7 +742,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       await user.click(screen.getByRole('button', { name: /responder/i }));
 
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalled();
+        expect(mockShowToast).toHaveBeenCalled();
       });
 
       expect(textarea.value).toBe('Una respuesta cualquiera');

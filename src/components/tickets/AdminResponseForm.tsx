@@ -3,6 +3,7 @@ import type React from 'react';
 import { ticketApi } from '../../services/ticketApi';
 import type { TicketResponse } from '../../types/ticket';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import './AdminResponseForm.css';
 
 export const MAX_RESPONSE_LENGTH = 2000;
@@ -22,6 +23,7 @@ const AdminResponseForm = ({ ticketId, onResponseCreated }: AdminResponseFormPro
   const [submitting, setSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,10 +35,10 @@ const AdminResponseForm = ({ ticketId, onResponseCreated }: AdminResponseFormPro
       onResponseCreated(created);
       setText('');
       textareaRef.current?.focus();
-      window.alert('Respuesta enviada correctamente');
+      showToast('Respuesta enviada correctamente', 'success');
     } catch (err) {
       console.error('Error al enviar respuesta:', err);
-      window.alert('No se pudo enviar la respuesta');
+      showToast('No se pudo enviar la respuesta', 'error');
     } finally {
       setSubmitting(false);
     }
