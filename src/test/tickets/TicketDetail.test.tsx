@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import TicketDetail from '../../pages/tickets/TicketDetail';
 import { ticketApi } from '../../services/ticketApi';
-import { authService } from '../../services/auth';
 import type { Ticket, TicketResponse } from '../../types/ticket';
 
 // ---------------------------------------------------------------------------
@@ -31,12 +30,9 @@ vi.mock('../../services/ticketApi', () => ({
   },
 }));
 
-vi.mock('../../services/auth', () => ({
-  authService: {
-    getCurrentUser: vi.fn(),
-    isAuthenticated: vi.fn(),
-    isAdmin: vi.fn(),
-  },
+// Mock AuthContext — the component uses useAuth() for authentication state
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: vi.fn(),
 }));
 
 vi.mock('../../components/common', () => ({
@@ -53,6 +49,26 @@ vi.mock('../../components/common', () => ({
     </div>
   ),
 }));
+
+import { useAuth } from '../../context/AuthContext';
+
+// ---------------------------------------------------------------------------
+// Auth helper — builds the return value for useAuth mock
+// ---------------------------------------------------------------------------
+
+const mockUseAuth = (overrides: Partial<ReturnType<typeof useAuth>> = {}) => {
+  vi.mocked(useAuth).mockReturnValue({
+    user: null,
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    refreshUser: vi.fn(),
+    isAuthenticated: true,
+    isAdmin: false,
+    ...overrides,
+  });
+};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -101,7 +117,7 @@ const renderTicketDetail = (ticketId = '42') => {
 };
 
 // ---------------------------------------------------------------------------
-// Tests — RED phase (TDD)
+// Tests
 // ---------------------------------------------------------------------------
 
 // ===========================================================================
@@ -111,16 +127,11 @@ const renderTicketDetail = (ticketId = '42') => {
 describe('TicketDetail — HU-1.2: Visualización de prioridad', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(authService.getCurrentUser).mockReturnValue({
-      id: 'user-123',
-      email: 'user@test.com',
-      username: 'testuser',
-      role: 'USER',
-      is_active: true,
-      created_at: '2026-01-01T00:00:00Z',
+    mockUseAuth({
+      user: { id: 'user-123', email: 'user@test.com', username: 'testuser', role: 'USER', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+      isAuthenticated: true,
+      isAdmin: false,
     });
-    vi.mocked(authService.isAuthenticated).mockReturnValue(true);
-    vi.mocked(authService.isAdmin).mockReturnValue(false);
     vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
   });
 
@@ -170,16 +181,11 @@ describe('TicketDetail — HU-3.1: Sección Respuestas', () => {
     vi.clearAllMocks();
 
     // Default: authenticated user is the ticket creator
-    vi.mocked(authService.getCurrentUser).mockReturnValue({
-      id: 'user-123',
-      email: 'user@test.com',
-      username: 'testuser',
-      role: 'USER',
-      is_active: true,
-      created_at: '2026-01-01T00:00:00Z',
+    mockUseAuth({
+      user: { id: 'user-123', email: 'user@test.com', username: 'testuser', role: 'USER', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+      isAuthenticated: true,
+      isAdmin: false,
     });
-    vi.mocked(authService.isAuthenticated).mockReturnValue(true);
-    vi.mocked(authService.isAdmin).mockReturnValue(false);
   });
 
   // -----------------------------------------------------------------------
@@ -265,15 +271,11 @@ describe('TicketDetail — HU-3.1: Sección Respuestas', () => {
   // -----------------------------------------------------------------------
   describe('cuando el usuario no es creador ni admin', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue({
-        id: 'user-999',
-        email: 'otro@test.com',
-        username: 'otrousuario',
-        role: 'USER',
-        is_active: true,
-        created_at: '2026-01-01T00:00:00Z',
+      mockUseAuth({
+        user: { id: 'user-999', email: 'otro@test.com', username: 'otrousuario', role: 'USER', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+        isAuthenticated: true,
+        isAdmin: false,
       });
-      vi.mocked(authService.isAdmin).mockReturnValue(false);
 
       vi.mocked(ticketApi.getTicket).mockResolvedValue(mockTicket);
       // The API might reject, or the component might hide — either way, responses should NOT show
@@ -305,15 +307,11 @@ describe('TicketDetail — HU-3.1: Sección Respuestas', () => {
   // -----------------------------------------------------------------------
   describe('cuando el usuario es ADMIN (no creador)', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue({
-        id: 'admin-001',
-        email: 'admin@test.com',
-        username: 'adminuser',
-        role: 'ADMIN',
-        is_active: true,
-        created_at: '2026-01-01T00:00:00Z',
+      mockUseAuth({
+        user: { id: 'admin-001', email: 'admin@test.com', username: 'adminuser', role: 'ADMIN', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+        isAuthenticated: true,
+        isAdmin: true,
       });
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
 
       vi.mocked(ticketApi.getTicket).mockResolvedValue(mockTicket);
       vi.mocked(ticketApi.getResponses).mockResolvedValue(mockResponses);
@@ -391,8 +389,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('cuando ADMIN y ticket OPEN', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
     });
@@ -424,8 +421,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('cuando ADMIN y ticket IN_PROGRESS', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({
         ...mockTicket,
         status: 'IN_PROGRESS',
@@ -453,8 +449,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('cuando el usuario es USER (no ADMIN)', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(regularUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(false);
+      mockUseAuth({ user: regularUser, isAuthenticated: true, isAdmin: false });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
     });
@@ -482,8 +477,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('cuando ADMIN y ticket CLOSED', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({
         ...mockTicket,
         status: 'CLOSED',
@@ -522,8 +516,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('estado del botón Responder', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
     });
@@ -570,8 +563,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('límite de 2000 caracteres', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
     });
@@ -621,8 +613,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('envío exitoso de respuesta', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
       vi.mocked(ticketApi.createResponse).mockResolvedValue(newResponse);
@@ -705,8 +696,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('error al enviar respuesta', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
       vi.mocked(ticketApi.createResponse).mockRejectedValue(new Error('Network Error'));

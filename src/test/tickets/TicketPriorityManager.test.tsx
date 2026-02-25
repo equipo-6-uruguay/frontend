@@ -16,14 +16,13 @@
  * Mocks:
  *   - ticketApi.getTicket
  *   - ticketApi.updatePriority
- *   - authService.getCurrentUser
+ *   - useAuth (AuthContext)
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TicketPriorityManager from '../../pages/tickets/TicketPriorityManager';
 import * as ticketApiModule from '../../services/ticketApi';
-import * as authModule from '../../services/auth';
 import type { Ticket } from '../../types/ticket';
 import type { User } from '../../types/auth';
 
@@ -41,16 +40,29 @@ vi.mock('../../services/ticketApi', () => ({
   },
 }));
 
-vi.mock('../../services/auth', () => ({
-  authService: {
-    getCurrentUser: vi.fn(),
-    isAdmin: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    register: vi.fn(),
-    isAuthenticated: vi.fn(),
-  },
+// Mock AuthContext — the component uses useAuth() for authentication state
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: vi.fn(),
 }));
+
+import { useAuth } from '../../context/AuthContext';
+
+// ---------------------------------------------------------------------------
+// Auth helper
+// ---------------------------------------------------------------------------
+const mockUseAuth = (overrides: Partial<ReturnType<typeof useAuth>> = {}) => {
+  vi.mocked(useAuth).mockReturnValue({
+    user: null,
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    refreshUser: vi.fn(),
+    isAuthenticated: true,
+    isAdmin: false,
+    ...overrides,
+  });
+};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -101,7 +113,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
       const updatedTicket: Ticket = { ...ticket, priority: 'HIGH' };
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
@@ -126,7 +138,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       const updatedTicket: Ticket = { ...ticket, priority: 'HIGH' };
       const onUpdate = vi.fn();
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={onUpdate} />);
@@ -147,7 +159,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     it('no expone UNASSIGNED como opción disponible si la prioridad actual no es UNASSIGNED', () => {
       const ticket = makeTicket({ status: 'OPEN', priority: 'MEDIUM' });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
 
@@ -162,7 +174,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     it('no llama a ticketApi.updatePriority si se intenta forzar UNASSIGNED con otra prioridad activa', async () => {
       const ticket = makeTicket({ status: 'OPEN', priority: 'MEDIUM' });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(ticket);
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
@@ -182,7 +194,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     it('no renderiza el control de prioridad para un usuario con rol USER', () => {
       const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(regularUser);
+      mockUseAuth({ user: regularUser, isAuthenticated: true, isAdmin: false });
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
 
@@ -194,7 +206,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     it('no renderiza el botón guardar para un usuario con rol USER', () => {
       const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(regularUser);
+      mockUseAuth({ user: regularUser, isAuthenticated: true, isAdmin: false });
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
 
@@ -206,7 +218,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     it('no renderiza el control de prioridad cuando no hay usuario autenticado', () => {
       const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(null);
+      mockUseAuth({ user: null, isAuthenticated: false, isAdmin: false });
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
 
@@ -221,7 +233,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     it('no renderiza el control de prioridad si el ticket está CLOSED', () => {
       const ticket = makeTicket({ status: 'CLOSED', priority: 'LOW' });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
 
@@ -233,7 +245,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     it('no renderiza el botón guardar si el ticket está CLOSED', () => {
       const ticket = makeTicket({ status: 'CLOSED', priority: 'LOW' });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
 
@@ -245,7 +257,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
     it('no llama a ticketApi.updatePriority cuando el ticket está CLOSED', () => {
       const ticket = makeTicket({ status: 'CLOSED', priority: 'LOW' });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
 
@@ -263,7 +275,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
         priority_justification: 'Impacta a cliente VIP',
       };
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
 
       const onUpdate = vi.fn();
@@ -295,7 +307,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
         priority_justification: 'Impacta a cliente VIP',
       };
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
 
       const onUpdate = vi.fn();
@@ -327,7 +339,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
       const updatedTicket: Ticket = { ...ticket, priority: 'LOW' };
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
 
       const onUpdate = vi.fn();
@@ -350,7 +362,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
       const updatedTicket: Ticket = { ...ticket, priority: 'LOW' };
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
 
       const onUpdate = vi.fn();
@@ -375,7 +387,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
         response: { status: 403 },
       });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockRejectedValue(axiosError);
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
@@ -399,7 +411,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
         response: { status: 400 },
       });
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockRejectedValue(axiosError);
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
@@ -419,7 +431,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       const ticket = makeTicket({ status: 'OPEN', priority: 'UNASSIGNED' });
       const updatedTicket: Ticket = { ...ticket, priority: 'HIGH' };
 
-      vi.mocked(authModule.authService.getCurrentUser).mockReturnValue(adminUser);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApiModule.ticketApi.updatePriority).mockResolvedValue(updatedTicket);
 
       render(<TicketPriorityManager ticket={ticket} onUpdate={noop} />);
