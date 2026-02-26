@@ -29,7 +29,7 @@ const TicketList = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [user]);
 
   const handleDelete = (id: number) => {
     setDeleteId(id);

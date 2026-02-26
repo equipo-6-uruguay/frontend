@@ -39,6 +39,9 @@ ENV/
 .coverage
 htmlcov/
 
+# Vitest / v8 coverage
+coverage/
+
 # mypy
 .mypy_cache/
 .dmypy.json

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import TicketDetail from '../../pages/tickets/TicketDetail';
@@ -535,20 +535,20 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('se habilita al escribir texto en el textarea', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
         expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
       });
 
-      await user.type(screen.getByTestId('response-textarea'), 'Una respuesta válida');
+      fireEvent.change(screen.getByTestId('response-textarea'), {
+        target: { value: 'Una respuesta válida' },
+      });
 
       expect(screen.getByRole('button', { name: /responder/i })).toBeEnabled();
     });
 
     it('vuelve a deshabilitarse si el texto se borra', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
@@ -556,10 +556,10 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       });
 
       const textarea = screen.getByTestId('response-textarea');
-      await user.type(textarea, 'Texto');
+      fireEvent.change(textarea, { target: { value: 'Texto' } });
       expect(screen.getByRole('button', { name: /responder/i })).toBeEnabled();
 
-      await user.clear(textarea);
+      fireEvent.change(textarea, { target: { value: '' } });
       expect(screen.getByRole('button', { name: /responder/i })).toBeDisabled();
     });
   });
@@ -575,14 +575,15 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('actualiza el contador al escribir texto', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
         expect(screen.getByText('0 / 2000')).toBeInTheDocument();
       });
 
-      await user.type(screen.getByTestId('response-textarea'), 'Hola');
+      fireEvent.change(screen.getByTestId('response-textarea'), {
+        target: { value: 'Hola' },
+      });
 
       expect(screen.getByText('4 / 2000')).toBeInTheDocument();
     });
@@ -599,16 +600,14 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('muestra "2000 / 2000" al alcanzar el límite exacto', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
         expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
       });
 
-      // userEvent type es lento para strings largos → usamos fireEvent
       const textarea = screen.getByTestId('response-textarea');
-      await user.type(textarea, 'a'.repeat(2000));
+      fireEvent.change(textarea, { target: { value: 'a'.repeat(2000) } });
 
       expect(screen.getByText('2000 / 2000')).toBeInTheDocument();
     });
@@ -629,10 +628,9 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       await waitFor(() => {
         expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
       });
-      await user.type(
-        screen.getByTestId('response-textarea'),
-        'Esta es la nueva respuesta del admin',
-      );
+      fireEvent.change(screen.getByTestId('response-textarea'), {
+        target: { value: 'Esta es la nueva respuesta del admin' },
+      });
       await user.click(screen.getByRole('button', { name: /responder/i }));
     };
 
@@ -718,7 +716,9 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
         expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
       });
 
-      await user.type(screen.getByTestId('response-textarea'), 'Una respuesta cualquiera');
+      fireEvent.change(screen.getByTestId('response-textarea'), {
+        target: { value: 'Una respuesta cualquiera' },
+      });
       await user.click(screen.getByRole('button', { name: /responder/i }));
 
       await waitFor(() => {
@@ -738,7 +738,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       });
 
       const textarea = screen.getByTestId('response-textarea') as HTMLTextAreaElement;
-      await user.type(textarea, 'Una respuesta cualquiera');
+      fireEvent.change(textarea, { target: { value: 'Una respuesta cualquiera' } });
       await user.click(screen.getByRole('button', { name: /responder/i }));
 
       await waitFor(() => {

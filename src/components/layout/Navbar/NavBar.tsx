@@ -23,12 +23,13 @@ const Navbar = () => {
       console.error("Error cargando notificaciones", error);
     }
   }, [isAuthenticated]);
-
   useEffect(() => {
     // Solo cargar notificaciones si el usuario está autenticado y no está en estado de carga
     if (!isAuthenticated || loading) return;
-    
-    loadUnreadCount();
+
+    setTimeout(() => {
+      void loadUnreadCount();
+    }, 0);
   }, [loadUnreadCount, trigger, isAuthenticated, loading]);
 
   const handleLogout = async () => {
