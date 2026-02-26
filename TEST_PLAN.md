@@ -130,3 +130,91 @@ Usuario → Registro → Login → Crear Ticket → Ver Ticket en lista
 **Criterios de éxito:**
 - El flujo crítico completo pasa sin errores.
 - No hay errores 500 en la consola del navegador durante el flujo.
+
+---
+
+## 4. Pruebas de Integración — Endpoints REST
+
+Todas las pruebas de integración del backend se ejecutan con **Pytest + Django Test Client** o **DRF APIClient**, sobre una base de datos PostgreSQL de test (`:memory:` o contenedor temporal). Cada prueba verifica el HTTP status, el cuerpo de la respuesta y los efectos secundarios relevantes (eventos publicados, estado en DB).
+
+---
+
+### 4.1 Ticket Service (`/tickets/`)
+
+| # | Endpoint | Método | Caso de prueba | Status esperado |
+|---|----------|--------|---------------|-----------------|
+| T-01 | `/tickets/` | GET | Listar todos los tickets autenticado | `200 OK` |
+| T-02 | `/tickets/` | GET | Acceso sin token | `401 Unauthorized` |
+| T-03 | `/tickets/` | POST | Crear ticket válido (título + descripción) → verificar `status="OPEN"` y evento `ticket.created` publicado | `201 Created` |
+| T-04 | `/tickets/` | POST | Crear ticket sin título | `400 Bad Request` |
+| T-05 | `/tickets/{id}/` | GET | Obtener ticket existente | `200 OK` |
+| T-06 | `/tickets/{id}/` | GET | Obtener ticket con ID inexistente | `404 Not Found` |
+| T-07 | `/tickets/{id}/` | DELETE | Eliminar ticket existente | `204 No Content` |
+| T-08 | `/tickets/{id}/status/` | PATCH | Transición válida `OPEN → IN_PROGRESS` → verificar evento `ticket.status_changed` | `200 OK` |
+| T-09 | `/tickets/{id}/status/` | PATCH | Transición inválida sobre ticket `CLOSED` → excepción `TicketAlreadyClosed` | `400 Bad Request` |
+| T-10 | `/tickets/{id}/status/` | PATCH | Idempotencia: mismo estado solicitado → sin cambio, sin evento | `200 OK` (sin evento) |
+| T-11 | `/tickets/{id}/priority/` | PATCH | Actualizar prioridad con rol admin y justificación | `200 OK` |
+| T-12 | `/tickets/{id}/priority/` | PATCH | Actualizar prioridad con rol `user` | `403 Forbidden` |
+| T-13 | `/tickets/{id}/responses/` | GET | Listar respuestas de un ticket | `200 OK` |
+| T-14 | `/tickets/{id}/responses/` | POST | Agregar respuesta válida | `201 Created` |
+| T-15 | `/tickets/{id}/responses/` | POST | Respuesta vacía | `400 Bad Request` |
+
+**Verificaciones adicionales (T-03, T-08):**
+```python
+# Verificar que el evento se publicó correctamente (mock de RabbitMQ publisher)
+mock_publisher.assert_called_once_with(
+    exchange="ticket.events",
+    routing_key="ticket.created",  # o "ticket.status_changed"
+    body={
+        "event_type": "ticket.created",
+        "ticket_id": <id>,
+        "title": "...",
+        "user_id": <id>,
+        "status": "open",
+        "timestamp": "<ISO8601>"
+    }
+)
+```
+
+---
+
+### 4.2 Assignment Service (`/assignments/`)
+
+| # | Endpoint | Método | Caso de prueba | Status esperado |
+|---|----------|--------|---------------|-----------------|
+| A-01 | `/assignments/` | GET | Listar asignaciones autenticado | `200 OK` |
+| A-02 | `/assignments/` | GET | Sin autenticación | `401 Unauthorized` |
+| A-03 | `/assignments/{id}/assign-user/` | PATCH | Reasignar agente válido | `200 OK` |
+| A-04 | `/assignments/{id}/assign-user/` | PATCH | ID de agente inexistente | `400 Bad Request` |
+| A-05 | `/assignments/{id}/` | DELETE | Eliminar asignación existente | `204 No Content` |
+| A-06 | `/assignments/{id}/` | DELETE | Eliminar asignación con ID inexistente | `404 Not Found` |
+| A-07 | Consumer `ticket.created` | Evento | Al recibir evento válido → asignación creada en DB | Asignación persiste |
+| A-08 | Consumer `ticket.created` | Evento | Mensaje malformado (sin `ticket_id`) → no crash, log de error | Consumer sigue vivo |
+
+---
+
+### 4.3 Notification Service (`/notifications/`)
+
+| # | Endpoint | Método | Caso de prueba | Status esperado |
+|---|----------|--------|---------------|-----------------|
+| N-01 | `/notifications/` | GET | Listar notificaciones del usuario autenticado | `200 OK` |
+| N-02 | `/notifications/` | GET | Sin autenticación | `401 Unauthorized` |
+| N-03 | `/notifications/{id}/read/` | PATCH | Marcar notificación como leída | `200 OK` |
+| N-04 | `/notifications/{id}/read/` | PATCH | ID inexistente | `404 Not Found` |
+| N-05 | `/notifications/{id}/` | DELETE | Eliminar notificación | `204 No Content` |
+| N-06 | `/notifications/clear/` | DELETE | Limpiar todas las notificaciones del usuario | `204 No Content` |
+| N-07 | Consumer `ticket.created` | Evento | Evento recibido → notificación guardada en DB con datos correctos | Notificación persiste |
+| N-08 | Consumer | Evento | Procesamiento idempotente (mismo evento duplicado) → sin duplicados | 1 sola notificación |
+
+---
+
+### 4.4 User Service (`/auth/`)
+
+| # | Endpoint | Método | Caso de prueba | Status esperado |
+|---|----------|--------|---------------|-----------------|
+| U-01 | `/auth/register/` | POST | Registro con datos válidos | `201 Created` |
+| U-02 | `/auth/register/` | POST | Email duplicado | `400 Bad Request` |
+| U-03 | `/auth/login/` | POST | Credenciales válidas → retorna JWT | `200 OK` |
+| U-04 | `/auth/login/` | POST | Contraseña incorrecta | `401 Unauthorized` |
+| U-05 | `/auth/by-role/{role}/` | GET | Obtener usuarios por rol `ADMIN` (autenticado) | `200 OK` |
+| U-06 | `/auth/by-role/{role}/` | GET | Rol inválido o sin permiso | `403 Forbidden` |
