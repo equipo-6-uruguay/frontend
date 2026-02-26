@@ -535,7 +535,6 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('se habilita al escribir texto en el textarea', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
@@ -550,7 +549,6 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('vuelve a deshabilitarse si el texto se borra', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
@@ -577,7 +575,6 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('actualiza el contador al escribir texto', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
@@ -603,7 +600,6 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('muestra "2000 / 2000" al alcanzar el límite exacto', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
