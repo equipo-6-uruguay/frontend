@@ -305,3 +305,68 @@ jobs:
 - [ ] Todos los casos de integración de la tabla 4.x ejecutados y pasando.
 - [ ] Flujo E2E crítico ejecutado manualmente sin errores.
 - [ ] `TEST_PLAN.md` actualizado con resultados reales post-ejecución.
+
+---
+
+## 7. Gestión de Riesgos
+
+### 7.1 Matriz de Riesgos
+
+> **Probabilidad:** Alta (A) | Media (M) | Baja (B)  
+> **Impacto:** Alto (A) | Medio (M) | Bajo (B)  
+> **Nivel de riesgo:** Crítico (P×I = AA) | Alto (AM/MA) | Medio (MM/AB/BA) | Bajo (BB)
+
+| ID | Riesgo | Probabilidad | Impacto | Nivel | Estrategia de Mitigación |
+|----|--------|:---:|:---:|:---:|--------------------------|
+| R-01 | **Baja cobertura de tests en servicios de backend** — Assignment y Notification Service tienen poca cobertura de dominio | A | A | **Crítico** | Sprint dedicado a tests de integración (Fase 2). Bloquear merge si cobertura < 80 % mediante CI. |
+| R-02 | **Consumidores RabbitMQ sin manejo de errores robusto** — Mensajes malformados pueden crashear el consumer | A | A | **Crítico** | Agregar `try/except` alrededor de todo el handler (ver instrucciones RabbitMQ). Pruebas A-08 / N-08. Reconnect automático. |
+| R-03 | **Tokens JWT almacenados en `localStorage`** — Vulnerabilidad XSS que expone credenciales | M | A | **Alto** | Migrar a HttpOnly cookies (`auth-security.test.ts`). Bloquear PR si el test falla. |
+| R-04 | **Acoplamiento de servicios a través de base de datos** — Un servicio podría importar modelos de otro | B | A | **Alto** | Lint personalizado para detectar imports cruzados de modelos. Revisión obligatoria de PRs. |
+| R-05 | **Inconsistencia en contratos de eventos** — Un cambio en `ticket.created` sin actualizar consumers rompe la integración | M | A | **Alto** | Documentar contratos en `copilot-instructions.md`. Tests de consumer con payload versionado. |
+| R-06 | **Deuda técnica acumulada en código duplicado** (~90 % setup RabbitMQ) — Bugs en un consumer no se propagan a la abstracción del otro | A | M | **Alto** | Refactorizar hacia `BaseRabbitMQConsumer` (identificado en `DEUDA_TECNICA.md`). Planificar en próximo sprint. |
+| R-07 | **Falta de pruebas E2E automatizadas** — Regresiones en flujos críticos no detectadas automáticamente | A | M | **Alto** | Implementar Playwright en Fase 7. Mientras tanto: E2E manual obligatorio en staging antes de cada release. |
+| R-08 | **Títulos o descripciones de tickets vacíos en frontend** — Validación solo en backend; UX confusa | M | M | **Medio** | Agregar validación de formulario en `TicketForm.tsx`. Test en `src/test/components/`. |
+| R-09 | **Variables de entorno no configuradas en CI** — Secrets faltantes causan fallos en pipeline | M | M | **Medio** | Documentar todas las variables en `.env.example`. Revisar secrets de GitHub Actions antes de cada sprint. |
+| R-10 | **Falta de manejo de errores HTTP en el frontend** — `useFetch` puede ignorar silenciosamente errores 4xx/5xx | M | M | **Medio** | Revisar y actualizar `useFetch.ts` para lanzar excepciones en error responses. Error boundaries globales activos. |
+| R-11 | **Tests flaky por dependencia de tiempo** — Tests de `dateFormat.ts` o timers asíncronos fallan intermitentemente | B | M | **Medio** | Usar `vi.useFakeTimers()` y fixtures de fecha fija en todos los tests de fecha. |
+| R-12 | **Desincronización de versiones de Docker entre dev y CI** — Comportamiento diferente entre entornos | B | B | **Bajo** | Fijar versiones en `docker-compose.yml` y `Dockerfile`. Revisar en cada release. |
+
+---
+
+### 7.2 Riesgos Críticos — Detalle y Plan de Acción
+
+#### R-01: Baja cobertura de tests en backend
+
+```
+Estado actual : Assignment Service y Notification Service sin tests de dominio
+Impacto       : Regresiones silenciosas en lógica de negocio
+Acción        : Completar pruebas de integración (Tablas 4.2 y 4.3) antes del 07-Mar-2026
+Owner         : Equipo Backend
+```
+
+#### R-02: Consumidores RabbitMQ sin manejo de errores robusto
+
+```
+Estado actual : Consumers con try/except incompleto; sin reconnect automático
+Impacto       : El sistema de asignación y notificación puede dejar de procesar eventos ante un error
+Acción        : Implementar BaseRabbitMQConsumer con retry logic; tests A-08 y N-08 deben pasar
+Owner         : Equipo Backend
+```
+
+#### R-03: Tokens JWT en localStorage
+
+```
+Estado actual : Posible almacenamiento en localStorage (detectado en auditoría)
+Impacto       : XSS puede robar sesiones de todos los usuarios
+Acción        : Migrar a HttpOnly cookies; auth-security.test.ts debe validar ausencia en localStorage
+Owner         : Equipo Frontend
+```
+
+---
+
+### 7.3 Proceso de Revisión de Riesgos
+
+- Los riesgos se revisan al inicio de cada sprint.
+- Un riesgo se cierra cuando su estrategia de mitigación está implementada y validada por tests.
+- Nuevos riesgos identificados durante el desarrollo se agregan a esta tabla con commit en la misma rama.
+- El Tech Lead es responsable de mantener actualizada esta sección.
