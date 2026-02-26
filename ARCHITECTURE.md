@@ -1,338 +1,88 @@
-# Arquitectura del Frontend — Sistema de Tickets
+# Frontend Architecture & API Contract: Migración a Clean Architecture
 
-Este documento describe la arquitectura del frontend, las convenciones adoptadas, los contratos de eventos, los estándares de testing y las normas de seguridad/documentación.
+## 1. Debate Arquitectónico: Del Monolito a Clean Architecture (Frontend)
 
----
+### Análisis de la Estructura Actual ("El Monolito Heredado")
+El frontend actual (`SistemaTickets/frontend`) presenta una estructura acoplada y menos escalable, característica de un enfoque monolítico inicial.
 
-## Tabla de contenidos
+**"Dolores" identificados en la arquitectura actual:**
+1. **Acoplamiento de Lógica y Vista:** Componentes pesados (como `TicketAssign.tsx`) mezclan lógica de obtención de datos, manejo de estado complejo y renderizado, dificultando el testing y la reutilización.
+2. **Estructura de Directorios Plana:** Las carpetas `src/components` y `src/pages` contienen componentes mezclados sin clara separación por dominio de negocio (Auth, Tickets, Assignments, Notifications).
+3. **Falta de Capa de Dominio:** Toda la lógica de negocio (ej. cálculo de prioridades, formateo de datos) reside dispersa en los componentes de UI o en servicios muy básicos.
+4. **Acoplamiento Directo a Axios:** Los llamados a la API (`services/*.ts`) no abstraen correctamente la infraestructura, siendo adaptadores muy delgados que exponen detalles del backend a la UI.
 
-1. [Estructura del proyecto](#1-estructura-del-proyecto)
-2. [Domain-Driven Design (DDD)](#2-domain-driven-design-ddd)
-3. [Convenciones de naming](#3-convenciones-de-naming)
-4. [Reglas de negocio relevantes](#4-reglas-de-negocio-relevantes)
-5. [Contratos de eventos (RabbitMQ / SSE)](#5-contratos-de-eventos-rabbitmq--sse)
-6. [Testing standards](#6-testing-standards)
-7. [Seguridad y documentación](#7-seguridad-y-documentación)
+### Beneficios de migrar hacia una Estructura Modular (Clean Architecture)
+Proponemos adoptar principios de Clean Architecture y modularidad por características (Feature-Sliced Design) en la próxima iteración del frontend (`sistema_tickets_V2/frontend`):
 
----
-
-## 1. Estructura del proyecto
-
-```
-frontend/
-├── public/                  # Archivos estáticos servidos directamente
-├── src/
-│   ├── components/          # Componentes React reutilizables
-│   │   ├── auth/            # ProtectedRoute y componentes de autenticación
-│   │   ├── common/          # LoadingState, EmptyState y otros de uso general
-│   │   ├── layout/          # Layout principal de la aplicación (Navbar, etc.)
-│   │   ├── notifications/   # Componentes de notificaciones
-│   │   ├── tickets/         # Componentes de gestión de tickets (TicketPriorityManager…)
-│   │   └── ui/              # Primitivos de UI sin lógica de dominio
-│   ├── context/             # React Contexts globales
-│   │   ├── AuthContext.tsx          # Estado de autenticación y sesión del usuario
-│   │   ├── NotificationContext.tsx  # Contador de notificaciones no leídas
-│   │   └── ToastContext.tsx         # Sistema de toasts/mensajes temporales
-│   ├── domain/              # Lógica de dominio pura (sin dependencias de React)
-│   │   └── tickets/
-│   │       ├── priorityRules.ts     # Validaciones y reglas de prioridad
-│   │       └── priorityUtils.ts     # Utilidades de formateo de prioridad
-│   ├── hooks/               # Custom hooks de React
-│   │   ├── useFetch.ts              # Fetch genérico con estado loading/error
-│   │   ├── useSSE.ts                # Conexión Server-Sent Events al notification-service
-│   │   └── useTicketDetail.ts       # Lógica de carga de detalle de ticket
-│   ├── pages/               # Vistas de la aplicación (páginas)
-│   │   ├── assignments/     # Listado de asignaciones (solo ADMIN)
-│   │   ├── auth/            # Login y Register
-│   │   ├── notifications/   # Listado de notificaciones
-│   │   └── tickets/         # TicketList, TicketDetail, CreateTicket
-│   ├── routes/
-│   │   └── AppRouter.tsx    # Definición de rutas con React Router v7
-│   ├── services/            # Clientes HTTP y llamadas a microservicios
-│   │   ├── axiosConfig.ts   # Instancias de Axios con interceptores compartidos
-│   │   ├── ticketApi.ts     # Llamadas al ticket-service
-│   │   ├── notification.ts  # Llamadas al notification-service
-│   │   ├── assignment.ts    # Llamadas al assignment-service
-│   │   └── user.ts          # Llamadas al users-service
-│   ├── styles/              # CSS global
-│   ├── test/                # Tests unitarios e integración con Vitest
-│   │   ├── __mocks__/       # Mocks compartidos entre tests
-│   │   ├── assignments/     # Tests de la sección asignaciones
-│   │   ├── components/      # Tests de componentes transversales
-│   │   ├── hooks/           # Tests de custom hooks
-│   │   ├── navbar/          # Tests del componente de navegación
-│   │   ├── notifications/   # Tests de la sección notificaciones
-│   │   ├── tickets/         # Tests de la sección tickets
-│   │   ├── auth-security.test.ts  # Tests de seguridad de la configuración Axios
-│   │   └── setup.ts         # Configuración global de Testing Library (jest-dom)
-│   ├── types/               # Definiciones de tipos TypeScript compartidas
-│   │   ├── auth.ts
-│   │   ├── ticket.ts
-│   │   ├── notification.ts
-│   │   └── assignment.ts
-│   ├── utils/               # Funciones utilitarias genéricas
-│   ├── App.tsx              # Punto de entrada de la aplicación React
-│   └── main.tsx             # Montaje del árbol de componentes en el DOM
-├── .env.example             # Plantilla de variables de entorno
-├── Dockerfile               # Imagen de producción (Nginx)
-├── nginx.conf               # Configuración del servidor Nginx
-├── index.html               # HTML raíz de Vite
-├── vite.config.ts           # Configuración de Vite
-├── tsconfig.json            # Configuración base de TypeScript
-└── package.json
-```
+1. **Separación por Capas y Dominios:**
+   - La introducción de una capa de dominio (`src/domain`) aislará la lógica de negocio pura del marco de trabajo (React).
+   - Los componentes y páginas se organizarán alrededor de dominios de negocio (feature folders): `tickets`, `assignments`, `auth`, `notifications`.
+2. **Desacoplamiento UI-Infraestructura:**
+   - Crear servicios que actúen como adaptadores explícitos, mapeando las respuestas crudas del backend a interfaces puras del frontend.
+3. **Mantenibilidad y Escalabilidad:** Será mucho más fácil encontrar, probar y modificar funcionalidades, porque el código que cambia junto, vivirá junto, organizado semánticamente.
 
 ---
 
-## 2. Domain-Driven Design (DDD)
+## 2. Plan de Refactorización Propuesto
 
-### Principio general
+Para pasar de la arquitectura actual a la propuesta, se deberá aplicar una refactorización profunda alineada a los siguientes objetivos:
 
-La capa de **dominio** (`src/domain/`) contiene **funciones puras** que encapsulan las reglas de negocio y son completamente independientes de React, del DOM y de cualquier efecto secundario. Esto permite testearlas de forma aislada y reutilizarlas desde componentes, hooks o tests sin necesidad de renderizar nada.
-
-### Subdominios representados
-
-| Subdomain | Carpeta | Responsabilidad |
-|---|---|---|
-| Tickets | `src/domain/tickets/` | Reglas de prioridad, validaciones de transición de estado |
-| Auth | `src/types/auth.ts` + `src/context/AuthContext.tsx` | Tipado de usuario y gestión de sesión |
-| Notificaciones | `src/hooks/useSSE.ts` + `src/context/NotificationContext.tsx` | Entrega de eventos en tiempo real |
-
-### Separación de capas
-
-```
-domain/          ← lógica pura, sin React, sin HTTP
-   ↑
-services/        ← llamadas HTTP a microservicios (Axios)
-   ↑
-hooks/           ← estado derivado, efectos, integración contextos
-   ↑
-components/      ← presentación y eventos de usuario
-   ↑
-pages/           ← composición de componentes para cada ruta
-```
-
-Los módulos de dominio **no importan** de `services/`, `hooks/` ni de React. Los servicios **no importan** de componentes ni de páginas.
+1. **Reestructuración de Directorios:**
+   - Migrar de una estructura plana a un diseño modular por características. Subdividir `src/components/` y `src/pages/` en módulos como `auth`, `tickets`, `assignments`, `notifications`, `common`, `layout`.
+   - Eliminar archivos "Utility" globales que crecen sin control a favor de utilidades específicas por dominio.
+2. **Aislamiento de la Lógica de Negocio (Domain Layer):**
+   - Extraer reglas críticas como la lógica de prioridad de tickets y ubicarlas en `src/domain/tickets/priorityRules.ts`, permitiendo testear las reglas de negocio independientemente de React.
+3. **Capa Adaptadora en Servicios:**
+   - Modificar los archivos en `src/services/` para implementar un patrón **Adapter**. Deberán transformar los DTOs del backend en Tipos robustos consumibles por el Frontend, aislando a la UI de futuros cambios de la API (ej. transformar `snake_case` a `camelCase`).
+4. **Mejores Prácticas de UI:**
+   - Reemplazar funciones bloqueantes y fuertemente acopladas al navegador como `window.alert` por modales de confirmación reutilizables y asíncronos (`ConfirmModal`).
+   - Depurar código no utilizado y Hooks "legacy" (como `useFetchOnce`).
 
 ---
 
-## 3. Convenciones de naming
+## 3. Construcción de la API y Contrato (Perspectiva del Frontend)
 
-### Archivos y carpetas
+Como parte de la apertura del sistema, el frontend interactuará con el backend expuesto como una API RESTful. A continuación, se define el contrato de la API que se planea consumir, documentando los verbos HTTP y sus usos esperados.
 
-| Tipo | Convención | Ejemplo |
-|---|---|---|
-| Componentes React | PascalCase + `.tsx` | `TicketPriorityManager.tsx` |
-| Páginas | PascalCase + `.tsx` | `TicketDetail.tsx` |
-| Hooks | camelCase con prefijo `use` + `.ts` | `useSSE.ts` |
-| Contextos | PascalCase + `Context.tsx` | `AuthContext.tsx` |
-| Servicios | camelCase + `.ts` | `ticketApi.ts`, `axiosConfig.ts` |
-| Tipos | camelCase + `.ts` | `ticket.ts`, `auth.ts` |
-| Reglas de dominio | camelCase descriptivo + `.ts` | `priorityRules.ts` |
-| Tests | mismo nombre que el módulo + `.test.ts(x)` | `TicketPriorityManager.test.tsx` |
-| Carpetas | camelCase o kebab-case en minúsculas | `tickets/`, `auth/`, `__mocks__/` |
+### Servicio: Tickets API (`/tickets/`)
 
-### Identificadores TypeScript
+| Endpoint | Método HTTP | Propósito | Códigos de Estado Esperados |
+| :--- | :---: | :--- | :--- |
+| `/tickets/` | **GET** | Obtener el listado completo de tickets. | `200 OK` |
+| `/tickets/` | **POST** | Crear un nuevo ticket (`CreateTicketDTO`). | `201 Created`, `400 Bad Request` |
+| `/tickets/{id}/` | **GET** | Obtener detalle de un ticket específico. | `200 OK`, `404 Not Found` |
+| `/tickets/{id}/` | **DELETE** | Eliminar lógicamente un ticket. | `204 No Content`, `404 Not Found` |
+| `/tickets/{id}/status/` | **PATCH** | Actualizar el estado (ej. "OPEN", "CLOSED"). | `200 OK`, `400 Bad Request`, `404 Not Found` |
+| `/tickets/{id}/priority/` | **PATCH** | Actualizar prioridad (solo Admin con justificación). | `200 OK`, `400 Bad Request`, `403 Forbidden` |
+| `/tickets/{id}/responses/` | **GET** | Obtener el hilo de respuestas de un ticket. | `200 OK` |
+| `/tickets/{id}/responses/` | **POST** | Agregar una nueva respuesta a un ticket. | `201 Created`, `400 Bad Request` |
 
-| Tipo | Convención | Ejemplo |
-|---|---|---|
-| Interfaces y tipos | PascalCase | `Ticket`, `AuthContextType`, `UpdatePriorityDTO` |
-| Enums / union types | PascalCase | `TicketStatus`, `TicketPriority`, `UserRole` |
-| Variables / funciones | camelCase | `refreshUnread`, `buildPriorityPayload` |
-| Constantes de módulo | UPPER_SNAKE_CASE | `EDITABLE_STATUSES`, `SSE_BASE_URL` |
-| Props de componentes | PascalCase para el tipo, camelCase para los valores | `interface TicketProps { ticketId: number }` |
+### Servicio: Assignments API (`/assignments/`)
 
-### Variables de entorno
+| Endpoint | Método HTTP | Propósito | Códigos de Estado Esperados |
+| :--- | :---: | :--- | :--- |
+| `/assignments/` | **GET** | Obtener historial y estado de asignaciones. | `200 OK` |
+| `/assignments/{id}/` | **DELETE** | Eliminar una asignación específica. | `204 No Content`, `404 Not Found` |
+| `/assignments/{id}/assign-user/` | **PATCH** | Asignar/Reasignar un agente a un ticket. | `200 OK`, `400 Bad Request`, `404 Not Found` |
 
-Todas las variables expuestas al navegador usan el prefijo `VITE_` (requerido por Vite). Las variables de backend **no** se incluyen en el frontend.
+### Servicio: Notifications API (`/notifications/`)
 
-```
-VITE_TICKET_SERVICE_URL
-VITE_NOTIFICATION_SERVICE_URL
-VITE_ASSIGNMENT_SERVICE_URL
-VITE_USERS_SERVICE_URL
-VITE_NOTIFICATION_BASE_URL   # base para la conexión SSE
-```
+| Endpoint | Método HTTP | Propósito | Códigos de Estado Esperados |
+| :--- | :---: | :--- | :--- |
+| `/notifications/` | **GET** | Obtener notificaciones para el usuario actual. | `200 OK` |
+| `/notifications/{id}/read/` | **PATCH** | Marcar una notificación específica como leída. | `200 OK`, `404 Not Found` |
+| `/notifications/{id}/` | **DELETE** | Eliminar una sola notificación. | `204 No Content`, `404 Not Found` |
+| `/notifications/clear/` | **DELETE** | Eliminar/Marcar como leídas todas las notificaciones. | `204 No Content` |
 
----
+### Servicio: Users (Auth) API (`/auth/`)
 
-## 4. Reglas de negocio relevantes
+| Endpoint | Método HTTP | Propósito | Códigos de Estado Esperados |
+| :--- | :---: | :--- | :--- |
+| `/auth/by-role/{role}/` | **GET** | Obtener lista de usuarios por rol (ej. 'ADMIN'). | `200 OK`, `403 Forbidden` |
 
-### Roles de usuario
-
-| Rol | Valor | Acceso |
-|---|---|---|
-| Usuario regular | `USER` | Crear tickets, ver propios tickets, ver notificaciones propias |
-| Administrador | `ADMIN` | Todo lo anterior + gestionar prioridades, ver asignaciones, ver todas las notificaciones |
-
-### Gestión de prioridad de tickets
-
-Implementada en `src/domain/tickets/priorityRules.ts`:
-
-1. **Solo ADMIN puede gestionar la prioridad** (`canManagePriority`): requiere `user.role === 'ADMIN'`.
-2. **El ticket debe estar en estado editable** (`EDITABLE_STATUSES = ['OPEN', 'IN_PROGRESS']`): los tickets `CLOSED` no admiten cambios de prioridad.
-3. **No se puede volver a `Unassigned`** (`isValidPriorityTransition`): una vez asignada una prioridad distinta de `Unassigned`, la transición a `Unassigned` queda bloqueada.
-4. **Prioridades asignables** (`ASSIGNABLE_PRIORITY_OPTIONS`): `Low`, `Medium`, `High`. El valor `Unassigned` es solo lectura.
-5. **Justificación opcional** (`buildPriorityPayload`): si el usuario introduce una justificación no vacía, se incluye en el payload enviado a la API.
-
-### Autenticación y sesión
-
-- JWT almacenado en **cookies HttpOnly** gestionadas por el backend. El frontend nunca accede directamente al token.
-- Al recibir un error `401`, los interceptores de Axios intentan un **único refresco automático** (`/auth/refresh/`) antes de redirigir a `/login`.
-- La autenticación es global vía `AuthContext`. La propiedad `isAdmin` se deriva de `user.role === 'ADMIN'`.
-
-### Rutas protegidas
-
-- `ProtectedRoute` bloquea el acceso a rutas privadas para usuarios no autenticados.
-- El parámetro `requireAdmin={true}` restringe rutas adicionales (asignaciones, notificaciones) solo a ADMIN.
-
----
-
-## 5. Contratos de eventos (RabbitMQ / SSE)
-
-### Arquitectura de mensajería
-
-El backend utiliza **RabbitMQ** como bus de eventos entre microservicios. El exchange principal es `ticket_events`.
-
-| Cola | Servicio consumidor |
-|---|---|
-| `assignment_queue` | assignment-service |
-| `notification_queue` | notification-service |
-| `users_queue` | users-service |
-
-### Eventos publicados por ticket-service
-
-| Evento (routing key) | Descripción | Campos principales |
-|---|---|---|
-| `ticket.created` | Nuevo ticket creado | `ticket_id`, `user_id`, `title` |
-| `ticket.status_changed` | Estado de ticket modificado | `ticket_id`, `status` |
-| `ticket.priority_changed` | Prioridad de ticket modificada | `ticket_id`, `priority`, `justification?` |
-| `ticket.response_added` | Respuesta de admin añadida | `ticket_id`, `admin_id`, `admin_name`, `text` |
-
-### Server-Sent Events (SSE) — notification-service → frontend
-
-El frontend se suscribe a eventos en tiempo real a través de `useSSE` (`src/hooks/useSSE.ts`).
-
-**Endpoint:**
-```
-GET /api/notifications/sse/<user_id>/
-```
-
-**Evento escuchado:** `notification`
-
-**Payload esperado:**
-```typescript
-interface SSENotificationPayload {
-  ticket_id: number;   // ID del ticket relacionado
-  message?: string;    // Descripción opcional del evento
-  [key: string]: unknown;
-}
-```
-
-**Comportamiento del hook `useSSE`:**
-
-1. Abre la conexión `EventSource` solo cuando el usuario está autenticado.
-2. Al recibir `notification`:
-   - Llama a `refreshUnread()` del `NotificationContext` para actualizar el badge global.
-   - Si el `ticket_id` del evento coincide con el ticket actualmente abierto (`currentTicketId`), invoca `onRefreshResponses()` para recargar las respuestas del detalle de ticket.
-3. Cierra la conexión al desmontar el componente.
-4. Los errores de transporte se registran como `debug` (EventSource reintenta automáticamente).
-
-### Tipo `TicketResponse` — contrato frontend/backend
-
-```typescript
-// src/types/ticket.ts
-interface TicketResponse {
-  id: number;
-  ticket_id: number;
-  admin_id: string;
-  admin_name: string;
-  text: string;
-  created_at: string;
-}
-```
-
-Este contrato está alineado con el evento `ticket.response_added` publicado por el ticket-service.
-
----
-
-## 6. Testing standards
-
-### Stack
-
-| Herramienta | Rol |
-|---|---|
-| **Vitest** | Test runner (integrado con Vite) |
-| **Testing Library (`@testing-library/react`)** | Renderizado y queries de componentes |
-| **`@testing-library/user-event`** | Simulación de interacciones de usuario |
-| **`@testing-library/jest-dom`** | Matchers adicionales para el DOM (`.toBeInTheDocument()`, etc.) |
-| **jsdom** | Entorno DOM para tests sin navegador |
-
-### Configuración
-
-- El setup global se encuentra en `src/test/setup.ts` e importa `@testing-library/jest-dom` para registrar los matchers.
-- Vitest está configurado en `vite.config.ts`.
-
-### Metodología TDD (Red-Green-Refactor)
-
-Los tests se escriben **antes** de la implementación (fase RED) y la implementación se desarrolla hasta que todos pasen (fase GREEN). Esto es especialmente aplicable a módulos de dominio y componentes nuevos.
-
-### Organización de tests
-
-- Los tests se ubican en `src/test/`, espejando la estructura de `src/`.
-- Los tests de dominio puro (funciones sin React) van en archivos `.test.ts`.
-- Los tests de componentes van en archivos `.test.tsx`.
-- Los mocks compartidos se colocan en `src/test/__mocks__/`.
-
-### Qué testear
-
-| Tipo de módulo | Qué verificar |
-|---|---|
-| Dominio (`domain/`) | Resultados de funciones puras para todas las entradas relevantes, incluyendo casos borde |
-| Servicios (`services/`) | Configuración de clientes Axios (ej. `withCredentials`) |
-| Componentes (`components/`) | Renderizado condicional por rol/estado, interacciones de usuario, llamadas a la API mockeada |
-| Hooks (`hooks/`) | Comportamiento ante cambios de estado, correcta limpieza de efectos |
-
-### Mocking
-
-- Los módulos de servicio se mockean con `vi.mock(...)`.
-- Los contextos de React (Auth, Notifications) se mockean vía `vi.mock(...)` sobre el módulo del contexto.
-- Los mocks se resetean en `beforeEach` con `vi.clearAllMocks()`.
-
-### Comandos
-
-```bash
-npm run test          # Ejecuta todos los tests una vez
-npm run test:watch    # Modo watch para desarrollo
-```
-
----
-
-## 7. Seguridad y documentación
-
-### Autenticación
-
-- Los tokens JWT **nunca** se almacenan en `localStorage` ni en variables de JavaScript. Se usan **cookies HttpOnly** gestionadas automáticamente por el navegador.
-- Todos los clientes Axios tienen `withCredentials: true` para que las cookies se envíen en cada petición cross-origin.
-- El interceptor de refresco utiliza una única promesa en vuelo (`refreshPromise`) para evitar múltiples refreshes simultáneos ante errores `401` concurrentes.
-
-### Variables de entorno
-
-- Las variables sensibles (claves secretas, contraseñas de base de datos) **no pertenecen al frontend** y no deben incluirse en ningún archivo con prefijo `VITE_`.
-- El archivo `.env` está en `.gitignore`. Solo se versiona `.env.example` con valores de ejemplo.
-
-### Control de acceso en el frontend
-
-- La verificación de rol en el frontend es **solo visual** (ocultar controles al usuario). La autorización real se aplica en el backend.
-- `ProtectedRoute` redirige a `/login` si el usuario no está autenticado.
-
-### Documentación de código
-
-- Las funciones públicas de módulos de dominio y servicios se documentan con **JSDoc**: descripción, `@param` y `@returns`.
-- Los tipos e interfaces se documentan con comentarios inline cuando su propósito no es evidente.
-- Los módulos con reglas de negocio incluyen un bloque de comentario al inicio explicando su responsabilidad y restricciones (ver `priorityRules.ts`).
-- Los contratos entre frontend y backend (tipos de respuesta API, payloads de eventos) se documentan en `src/types/`.
-
-### CORS
-
-En producción, `CORS_ALLOWED_ORIGINS` debe contener únicamente los orígenes autorizados. No usar `*`.
+### Consideraciones sobre Respuestas y HTTP Status Codes:
+- **`200 OK`**: A utilizar en operaciones de lectura (GET) o actualizaciones parciales sin creación (PATCH).
+- **`201 Created`**: Exclusivamente cuando la solicitud (POST) resulte en un nuevo recurso estructurado en base de datos (Tickets, Respuestas).
+- **`400 Bad Request`**: Malformaciones del lado del cliente, DTOs inválidos o reglas de validación fallidas enviadas al backend.
+- **`404 Not Found`**: Operaciones sobre ID que no existen (Tickets eliminados, asignaciones borradas).
+- **`500 Internal Server Error`**: Excepciones no controladas del backend.
