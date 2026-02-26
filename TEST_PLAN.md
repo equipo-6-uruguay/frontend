@@ -218,3 +218,90 @@ mock_publisher.assert_called_once_with(
 | U-04 | `/auth/login/` | POST | Contraseña incorrecta | `401 Unauthorized` |
 | U-05 | `/auth/by-role/{role}/` | GET | Obtener usuarios por rol `ADMIN` (autenticado) | `200 OK` |
 | U-06 | `/auth/by-role/{role}/` | GET | Rol inválido o sin permiso | `403 Forbidden` |
+
+---
+
+## 5. Herramientas
+
+### 5.1 Backend
+
+| Herramienta | Propósito | Versión |
+|-------------|-----------|---------|
+| **Pytest** | Framework principal de pruebas unitarias e integración | `≥ 7.x` |
+| **pytest-django** | Plugin para integración con Django (configuración de DB de test, fixtures) | `≥ 4.x` |
+| **pytest-cov** | Reporte de cobertura de código | `≥ 4.x` |
+| **factory_boy** | Creación de fixtures / objetos de test (evitar fixtures estáticas) | `≥ 3.x` |
+| **unittest.mock** | Mock de publicador RabbitMQ y dependencias externas (stdlib) | stdlib |
+| **DRF APIClient** | Cliente HTTP real sobre Django RequestFactory para tests de integración | incluido en DRF |
+
+**Configuración recomendada (`pytest.ini` / `pyproject.toml`):**
+```toml
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings.test"
+python_files = "tests.py test_*.py *_test.py"
+addopts = "--cov=. --cov-report=term-missing --cov-fail-under=80"
+```
+
+---
+
+### 5.2 Frontend
+
+| Herramienta | Propósito | Versión |
+|-------------|-----------|---------|
+| **Vitest** | Runner de pruebas (compatible con Vite, sin config extra) | `^1.0.0` |
+| **@testing-library/react** | Renderizado y queries de componentes en jsdom | `^16.x` |
+| **@testing-library/user-event** | Simulación de interacciones de usuario (click, type) | `^14.x` |
+| **@testing-library/jest-dom** | Matchers extra (`toBeInTheDocument`, `toHaveValue`) | `^6.x` |
+| **jsdom** | Entorno DOM simulado para tests fuera del navegador | `^22.x` |
+| **MSW (Mock Service Worker)** | Intercepción de peticiones HTTP — candidato para integración (no instalado aún) | `≥ 2.x` |
+| **Playwright** | E2E automatizado — planificado para siguiente sprint | `≥ 1.x` |
+
+**Configuración actual (`vite.config.ts`):**
+```ts
+test: {
+  environment: "jsdom",
+  setupFiles: "./src/test/setup.ts",
+  globals: true
+}
+```
+
+---
+
+### 5.3 CI/CD
+
+| Herramienta | Propósito |
+|-------------|-----------|
+| **GitHub Actions** | Ejecución automática de la suite de pruebas en cada PR hacia `develop` o `main` |
+| Reportes de cobertura | Artefacto generado por `pytest-cov` y Vitest (`--coverage`) publicado en el PR |
+
+**Pipeline sugerido (`.github/workflows/ci.yml`):**
+```
+on: [pull_request]
+jobs:
+  backend-tests: pytest --cov
+  frontend-tests: vitest run --coverage
+```
+
+---
+
+## 6. Calendario de Pruebas
+
+> Las fechas están alineadas al ciclo del Taller / Sprint actual. Ajustar según planning de equipo.
+
+| Fase | Actividades | Responsable | Fecha estimada |
+|------|-------------|-------------|----------------|
+| **Fase 1 — Baseline** | Revisar tests existentes, corregir tests rotos, garantizar suite verde en develop | Todo el equipo | 24 Feb — 28 Feb 2026 |
+| **Fase 2 — Integración backend** | Implementar casos de integración T-01..T-15, A-01..A-08, N-01..N-08, U-01..U-06 | Backend | 28 Feb — 07 Mar 2026 |
+| **Fase 3 — Seguridad frontend** | Completar `auth-security.test.ts`, validar `ProtectedRoute`, revisar almacenamiento de tokens | Frontend | 28 Feb — 05 Mar 2026 |
+| **Fase 4 — Revisión de cobertura** | Medir cobertura global, cerrar gaps hasta ≥ 80 % en dominio | Todo el equipo | 07 Mar — 10 Mar 2026 |
+| **Fase 5 — E2E manual** | Ejecutar flujo crítico en ambiente de staging, registrar evidencias | QA | 10 Mar — 12 Mar 2026 |
+| **Fase 6 — Documentación y entrega** | Actualizar plan con resultados reales, preparar entrega del taller | Tech Lead / QA | 12 Mar — 14 Mar 2026 |
+| **Fase 7 — E2E automatizado (next sprint)** | Configurar Playwright, automatizar flujo crítico | Frontend | Sprint siguiente |
+
+### 6.1 Criterios de salida (Definition of Done — Testing)
+
+- [ ] Suite de tests verde (`0 failures`) en la rama antes del merge.
+- [ ] Cobertura de dominio ≥ 80 % (backend y frontend).
+- [ ] Todos los casos de integración de la tabla 4.x ejecutados y pasando.
+- [ ] Flujo E2E crítico ejecutado manualmente sin errores.
+- [ ] `TEST_PLAN.md` actualizado con resultados reales post-ejecución.
