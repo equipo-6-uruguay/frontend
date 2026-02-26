@@ -59,3 +59,74 @@ Garantizar que todos los componentes del sistema (frontend React + microservicio
 | Infraestructura (Docker, Nginx) | Cubierto por revisión de configuración; no requiere pruebas automatizadas ahora |
 | Base de datos directa | Las pruebas usan bases de datos de prueba aisladas; no se accede a producción |
 | Servicios externos de terceros | Sin integraciones externas actualmente |
+
+---
+
+## 3. Niveles de Prueba
+
+### 3.1 Pruebas Unitarias
+
+**Objetivo:** Verificar que las unidades mínimas de código (funciones puras, clases de dominio, hooks) funcionan correctamente de forma aislada.
+
+| Capa | Qué se prueba | Herramienta | Ubicación |
+|------|--------------|-------------|-----------|
+| Dominio (backend) | Reglas de transición de estado (`TicketAlreadyClosed`, idempotencia), value objects | Pytest | `backend/*/tests/domain/` |
+| Dominio (frontend) | `priorityRules.ts`, `priorityUtils.ts` — lógica de cálculo de prioridad | Vitest | `src/test/tickets/` |
+| Hooks | `useFetch`, `useSSE`, `useTicketDetail` — comportamiento aislado con mocks | Vitest + RTL | `src/test/hooks/` |
+| Componentes UI | Renderizado, estados vacíos, interacciones básicas (sin backend) | Vitest + RTL | `src/test/components/`, `src/components/*/index.test.tsx` |
+| Utilidades | `dateFormat.ts` | Vitest | `src/test/` |
+
+**Criterios de éxito:**
+- Cobertura mínima del **80 %** en la capa de dominio (frontend y backend).
+- Todo caso de dominio crítico (transiciones de estado, reglas de prioridad) debe tener al menos un test positivo y uno negativo.
+- Los tests de dominio backend **no deben importar Django** (`django.db`, `models`, etc.).
+
+---
+
+### 3.2 Pruebas de Integración
+
+**Objetivo:** Verificar que los endpoints REST responden correctamente ante peticiones reales o semi-reales (DB de test, sin mocks de red).
+
+> Desarrollado en detalle en la sección [4](#4-pruebas-de-integración--endpoints-rest).
+
+**Criterios de éxito:**
+- Cada endpoint documentado en `ARCHITECTURE.md` tiene al menos un caso de prueba de integración.
+- Respuestas con el HTTP status correcto para casos felices y de error.
+- Las reglas de negocio (ej. no cambiar estado a ticket `CLOSED`) se validan a nivel de integración.
+
+---
+
+### 3.3 Pruebas de Seguridad / Autenticación
+
+**Objetivo:** Garantizar que las rutas protegidas rechazan peticiones sin token válido y que los tokens no se almacenan en `localStorage`.
+
+| Caso | Resultado esperado |
+|------|--------------------|
+| Petición a `/tickets/` sin JWT | `401 Unauthorized` |
+| Petición a `/tickets/{id}/priority/` con rol `user` | `403 Forbidden` |
+| Token en `localStorage` estándar | No debe existir (usar HttpOnly cookies) |
+| Componente `<ProtectedRoute>` sin sesión activa | Redirige a `/login` |
+
+**Herramienta:** Pytest (backend), Vitest + `auth-security.test.ts` (frontend).
+
+---
+
+### 3.4 Pruebas End-to-End (E2E)
+
+**Objetivo:** Validar el flujo completo crítico del sistema desde el navegador hasta la base de datos.
+
+**Flujo crítico cubierto:**
+
+```
+Usuario → Registro → Login → Crear Ticket → Ver Ticket en lista
+→ Agente asignado (verificar en Assignments) → Cambiar estado
+→ Notificación generada → Marcar notificación como leída
+```
+
+**Alcance inicial (sprint actual):**
+- Implementación manual del flujo con ambiente de staging.
+- Automatización con **Playwright** planificada para el siguiente sprint.
+
+**Criterios de éxito:**
+- El flujo crítico completo pasa sin errores.
+- No hay errores 500 en la consola del navegador durante el flujo.
