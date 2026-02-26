@@ -24,9 +24,9 @@ const Login = () => {
       
       // Redirigir al dashboard después del login exitoso
       navigate('/tickets', { replace: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      if (err.message) {
+      if (err instanceof Error && err.message) {
         setError(err.message);
       } else {
         setError('Error al iniciar sesión. Intenta nuevamente.');

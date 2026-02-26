@@ -60,11 +60,15 @@ export const useSSE = (options?: UseSSEOptions): void => {
   // Guardamos las últimas opciones en un ref para no necesitar incluirlas
   // como dependencias del effect (evita reconexiones innecesarias).
   const optionsRef = useRef(options);
-  optionsRef.current = options;
 
   // refreshUnread también va en ref para la misma razón.
   const refreshUnreadRef = useRef(refreshUnread);
-  refreshUnreadRef.current = refreshUnread;
+
+  // Sync refs in an effect to satisfy react-hooks/refs rule.
+  useEffect(() => {
+    optionsRef.current = options;
+    refreshUnreadRef.current = refreshUnread;
+  });
 
   const handleNotification = useCallback((event: MessageEvent) => {
     let payload: SSENotificationPayload;

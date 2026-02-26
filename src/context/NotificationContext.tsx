@@ -24,6 +24,7 @@ export const NotificationProvider = ({
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useNotifications = () => {
   const ctx = useContext(NotificationContext);
   if (!ctx) {

@@ -88,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
  * Hook to consume the AuthContext.
  * Must be used within an AuthProvider.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {

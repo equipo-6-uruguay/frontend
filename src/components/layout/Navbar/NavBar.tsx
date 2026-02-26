@@ -27,8 +27,9 @@ const Navbar = () => {
   useEffect(() => {
     // Solo cargar notificaciones si el usuario está autenticado y no está en estado de carga
     if (!isAuthenticated || loading) return;
-    
-    loadUnreadCount();
+
+    void loadUnreadCount();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [loadUnreadCount, trigger, isAuthenticated, loading]);
 
   const handleLogout = async () => {

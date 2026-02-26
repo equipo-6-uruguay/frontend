@@ -38,9 +38,9 @@ const Register = () => {
 
       // Redirigir al dashboard después del registro exitoso
       navigate('/tickets', { replace: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Register error:', err);
-      if (err.message) {
+      if (err instanceof Error && err.message) {
         setError(err.message);
       } else {
         setError('Error al crear la cuenta. Intenta nuevamente.');

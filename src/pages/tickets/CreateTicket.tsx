@@ -31,9 +31,10 @@ const CreateTicket = () => {
       refreshUnread();
 
       navigate("/tickets");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error creating ticket:", err);
-      setError(err.response?.data?.error || "Error al crear el ticket");
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      setError(axiosErr.response?.data?.error || "Error al crear el ticket");
     }
   };
 
