@@ -4,6 +4,15 @@ import { BrowserRouter } from 'react-router-dom';
 import NotificationList from '../../pages/notifications/NotificationList';
 import { notificationsApi } from '../../services/notification';
 
+// Mock NotificationContext — the component uses useNotifications for trigger
+vi.mock('../../context/NotificationContext', () => ({
+  useNotifications: () => ({ trigger: 0, refreshUnread: vi.fn() }),
+}));
+
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ showToast: vi.fn() }),
+}));
+
 // Mock the API
 vi.mock('../../services/notification', () => ({
   notificationsApi: {
@@ -27,14 +36,14 @@ vi.mock('../../components/common', () => ({
 
 const mockNotifications = [
   {
-    id: '1',
+    id: 1,
     title: 'New ticket assigned',
     message: 'New ticket assigned',
     read: false,
     createdAt: '2024-01-15T10:00:00Z',
   },
   {
-    id: '2',
+    id: 2,
     title: 'Ticket status changed',
     message: 'Ticket status changed',
     read: true,

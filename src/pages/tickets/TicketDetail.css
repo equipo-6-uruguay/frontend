@@ -7,11 +7,11 @@
 }
 
 .ticket-detail-card {
-  background-color: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 2rem;
 }
 
@@ -38,7 +38,7 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary);
   flex: 1;
 }
 
@@ -52,25 +52,25 @@
 
 .status-open { background-color: #dbeafe; color: #1d4ed8; }
 .status-in_progress { background-color: #fef3c7; color: #92400e; }
-.status-closed { background-color: #f1f5f9; color: #64748b; }
+.status-closed { background-color: var(--color-bg-tertiary); color: var(--color-text-secondary); }
 
 .ticket-detail-description {
-  color: #475569;
+  color: var(--color-text-secondary);
   line-height: 1.7;
   margin: 0 0 1rem 0;
 }
 
 .ticket-detail-meta {
-  color: #94a3b8;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid var(--color-border-light);
   padding-top: 0.75rem;
 }
 
 .ticket-detail-error {
   text-align: center;
   padding: 3rem;
-  color: #dc2626;
+  color: var(--color-error);
   font-size: 1.1rem;
 }
 
@@ -83,16 +83,16 @@
 .responses-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary);
   margin: 0 0 1rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .responses-empty {
   text-align: center;
   padding: 2rem;
-  color: #94a3b8;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -103,8 +103,8 @@
 }
 
 .response-item {
-  background-color: #f8fafc;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
   border-left: 3px solid #6366f1;
   border-radius: 12px;
   padding: 1.25rem;
@@ -119,17 +119,17 @@
 
 .response-admin {
   font-weight: 600;
-  color: #6366f1;
+  color: var(--color-primary);
   font-size: 0.9rem;
 }
 
 .response-date {
-  color: #94a3b8;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
 .response-text {
-  color: #334155;
+  color: var(--color-text-primary);
   line-height: 1.6;
   margin: 0;
 }
@@ -139,9 +139,9 @@
 .access-restricted {
   text-align: center;
   padding: 2rem;
-  color: #dc2626;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  color: var(--color-error);
+  background-color: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
   border-radius: 12px;
   margin-top: 1.5rem;
 }

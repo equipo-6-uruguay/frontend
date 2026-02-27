@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import TicketForm from "./TicketForm";
+import TicketForm from "../../components/tickets/TicketForm";
 import { ticketApi } from "../../services/ticketApi";
 import { useAuth } from "../../context/AuthContext";
 import type { CreateTicketDTO } from "../../types/ticket";
-import { useNotifications } from "../../context/NotificacionContext";
+import { useNotifications } from "../../context/NotificationContext";
 import "./CreateTicket.css";
 
 const CreateTicket = () => {
@@ -31,9 +31,10 @@ const CreateTicket = () => {
       refreshUnread();
 
       navigate("/tickets");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error creating ticket:", err);
-      setError(err.response?.data?.error || "Error al crear el ticket");
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      setError(axiosErr.response?.data?.error || "Error al crear el ticket");
     }
   };
 
@@ -47,17 +48,7 @@ const CreateTicket = () => {
       </div>
 
       {error && (
-        <div
-          className="error-message"
-          style={{
-            backgroundColor: "#fee2e2",
-            border: "1px solid #ef4444",
-            color: "#dc2626",
-            padding: "12px",
-            borderRadius: "8px",
-            marginBottom: "16px",
-          }}
-        >
+        <div className="error-alert" role="alert">
           {error}
         </div>
       )}

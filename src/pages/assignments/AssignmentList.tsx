@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import { assignmentsApi } from '../../services/assignment';
 import { ticketApi } from '../../services/ticketApi';
 import { userService } from '../../services/user';
+import { useToast } from '../../context/ToastContext';
 import { LoadingState, EmptyState, PageHeader } from '../../components/common';
 import type { Assignment } from '../../types/assignment';
+import type { AdminUser } from '../../types/user';
 import type { TicketPriority } from '../../types/ticket';
-import { formatPriority } from '../tickets/priorityUtils';
-import TicketAssign from '../../components/TicketAssign';
-import ConfirmModal from '../../components/ConfirmModal';
+import { formatPriority } from '../../domain/tickets/priorityUtils';
+import { formatDate } from '../../utils/dateFormat';
+import TicketAssign from '../../components/tickets/TicketAssign';
+import ConfirmModal from '../../components/ui/ConfirmModal';
+import { Clock } from 'lucide-react';
 import './AssignmentList.css';
 
 /**
@@ -23,9 +27,6 @@ interface UIAssignment extends Assignment {
 /**
  * Normaliza un string de prioridad arbitrario al tipo {@link TicketPriority}.
  * Acepta cualquier casing ('HIGH', 'high', 'High' → 'High').
- *
- * @param raw - Valor de prioridad crudo proveniente de la API
- * @returns Valor normalizado compatible con {@link TicketPriority}
  */
 function toPriorityKey(raw: string | undefined): TicketPriority {
   if (!raw) return 'Unassigned';
@@ -35,7 +36,9 @@ function toPriorityKey(raw: string | undefined): TicketPriority {
 }
 
 const AssignmentList = () => {
+  const { showToast } = useToast();
   const [assignments, setAssignments] = useState<UIAssignment[]>([]);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [agentMap, setAgentMap] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -45,18 +48,19 @@ const AssignmentList = () => {
       setLoading(true);
 
       // Fetch assignments, tickets y agentes concurrentemente
-      const [assignmentsData, ticketsData, adminUsers] = await Promise.all([
+      const [assignmentsData, ticketsData, adminUsersData] = await Promise.all([
         assignmentsApi.getAssignments(),
         ticketApi.getTickets(),
-        userService.getAdminUsers().catch(() => []),
+        userService.getAdminUsers().catch(() => [] as AdminUser[]),
       ]);
 
       // Mapa de id → título de ticket para enriquecer las tarjetas
       const ticketTitleMap = new Map(ticketsData.map(t => [t.id.toString(), t.title]));
 
       // Mapa de id → username de agente para resolver nombre en descripción
-      const newAgentMap = new Map(adminUsers.map(u => [u.id, u.username]));
+      const newAgentMap = new Map(adminUsersData.map(u => [u.id, u.username]));
       setAgentMap(newAgentMap);
+      setAdminUsers(adminUsersData);
 
       // Filter out assignments for tickets that don't exist anymore
       const activeTicketIds = new Set(ticketsData.map(t => t.id.toString()));
@@ -118,9 +122,10 @@ const AssignmentList = () => {
           a.id === id ? { ...a, completed: true, managing: false } : a
         )
       );
+      showToast('Asignación marcada como realizada', 'success');
     } catch (error) {
       console.error('Error al marcar como realizada:', error);
-      alert('No se pudo cerrar el ticket asociado. Intenta de nuevo.');
+      showToast('No se pudo cerrar el ticket asociado. Intenta de nuevo.', 'error');
     }
   };
 
@@ -136,10 +141,10 @@ const AssignmentList = () => {
         )
       );
       
-      alert(`✅ Ticket asignado exitosamente`);
+      showToast('Ticket asignado exitosamente', 'success');
     } catch (error) {
       console.error('Error asignando usuario:', error);
-      alert('❌ No se pudo asignar el ticket');
+      showToast('No se pudo asignar el ticket', 'error');
     }
   };
 
@@ -152,9 +157,10 @@ const AssignmentList = () => {
     try {
       await assignmentsApi.deleteAssignment(deleteId);
       setAssignments((prev) => prev.filter((a) => a.id !== deleteId));
+      showToast('Asignación eliminada', 'success');
     } catch (error) {
       console.error('Error eliminando asignación', error);
-      alert('No se pudo eliminar la asignación');
+      showToast('No se pudo eliminar la asignación', 'error');
     } finally {
       setDeleteId(null);
     }
@@ -207,7 +213,8 @@ const AssignmentList = () => {
 
               <div className="assignment-footer">
                 <div className="assignment-date">
-                  🕒 {new Date(item.assigned_at).toLocaleDateString()}
+                  <Clock size={14} />
+                  {formatDate(item.assigned_at)}
                 </div>
 
                 <button
@@ -224,6 +231,7 @@ const AssignmentList = () => {
                     ticketId={item.ticket_id}
                     currentAssignedId={item.assigned_to}
                     onAssign={(userId) => handleAssign(item.id, userId)}
+                    adminUsersList={adminUsers}
                   />
 
                   {!item.completed && (

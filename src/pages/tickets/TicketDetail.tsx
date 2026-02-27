@@ -4,11 +4,11 @@ import { LoadingState } from '../../components/common';
 import { formatDate } from '../../utils/dateFormat';
 import type { User } from '../../types/auth';
 import type { Ticket, TicketResponse } from '../../types/ticket';
-import { useTicketDetail } from './useTicketDetail';
+import { useTicketDetail } from '../../hooks/useTicketDetail';
 import { useSSE } from '../../hooks/useSSE';
-import AdminResponseForm from './AdminResponseForm';
-import { formatPriority } from './priorityUtils';
-import TicketPriorityManager from './TicketPriorityManager';
+import AdminResponseForm from '../../components/tickets/AdminResponseForm';
+import { formatPriority } from '../../domain/tickets/priorityUtils';
+import TicketPriorityManager from '../../components/tickets/TicketPriorityManager';
 import './TicketDetail.css';
 
 // ---------------------------------------------------------------------------

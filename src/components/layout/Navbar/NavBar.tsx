@@ -1,0 +1,168 @@
+import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { notificationsApi } from "../../../services/notification";
+import { useNotifications } from "../../../context/NotificationContext";
+import { useAuth } from "../../../context/AuthContext";
+import { useTheme } from "../../../context/ThemeContext";
+import { Bell, ClipboardList, PlusCircle, User, LogOut, Sun, Moon, ListChecks } from "lucide-react";
+import "./NavBar.css";
+
+const Navbar = () => {
+  const navigate = useNavigate();
+  const { trigger } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
+
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { user: currentUser, isAdmin, logout, isAuthenticated, loading } = useAuth();
+
+  const loadUnreadCount = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const notifications = await notificationsApi.getNotifications();
+      const unread = notifications.filter((n: { read: boolean }) => !n.read).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error("Error cargando notificaciones", error);
+    }
+  }, [isAuthenticated]);
+  useEffect(() => {
+    // Solo cargar notificaciones si el usuario está autenticado y no está en estado de carga
+    if (!isAuthenticated || loading) return;
+
+    setTimeout(() => {
+      void loadUnreadCount();
+    }, 0);
+  }, [loadUnreadCount, trigger, isAuthenticated, loading]);
+
+  const handleLogout = async () => {
+    closeMenu();
+    await logout();
+    navigate("/login", { replace: true });
+  };
+
+  const toggleMenu = () => setMenuOpen((prev) => !prev);
+  const closeMenu = () => setMenuOpen(false);
+
+  return (
+    <nav className="navbar">
+      <div className="navbar__brand">
+        <NavLink to="/tickets" className="navbar__logo" onClick={closeMenu}>
+          TicketSystem
+        </NavLink>
+      </div>
+
+      <button
+        className={`navbar__hamburger ${menuOpen ? "open" : ""}`}
+        onClick={toggleMenu}
+        aria-label="Toggle menu"
+        aria-expanded={menuOpen}
+      >
+        <span className="navbar__hamburger-line" />
+        <span className="navbar__hamburger-line" />
+        <span className="navbar__hamburger-line" />
+      </button>
+
+      {menuOpen && (
+        <div className="navbar__overlay" onClick={closeMenu} />
+      )}
+
+      <ul className={`navbar__links ${menuOpen ? "navbar__links--open" : ""}`}>
+        <li>
+          <NavLink
+            to="/tickets"
+            end
+            className={({ isActive }) =>
+              isActive ? "navbar__link active" : "navbar__link"
+            }
+            onClick={closeMenu}
+          >
+            <ClipboardList size={16} />
+            Tickets
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink
+            to="/tickets/new"
+            className={({ isActive }) =>
+              isActive ? "navbar__link active" : "navbar__link"
+            }
+            onClick={closeMenu}
+          >
+            <PlusCircle size={16} />
+            Crear Ticket
+          </NavLink>
+        </li>
+
+        {isAdmin && (
+          <li>
+            <NavLink
+              to="/notifications"
+              className={({ isActive }) =>
+                isActive ? "navbar__link active" : "navbar__link"
+              }
+              onClick={closeMenu}
+            >
+              <Bell size={16} />
+              Notificaciones
+              {unreadCount > 0 && (
+                <span className="navbar__badge">{unreadCount}</span>
+              )}
+            </NavLink>
+          </li>
+        )}
+
+        {isAdmin && (
+          <li>
+            <NavLink
+              to="/assignments"
+              className={({ isActive }) =>
+                isActive ? "navbar__link active" : "navbar__link"
+              }
+              onClick={closeMenu}
+            >
+              <ListChecks size={16} />
+              Asignaciones
+            </NavLink>
+          </li>
+        )}
+
+        <li className="navbar__actions">
+          <button
+            className="navbar__theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Cambiar a modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
+            title={`Modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </li>
+
+        {currentUser && (
+          <li className="navbar__user">
+            <span className="navbar__username">
+              <User size={16} />
+              {currentUser.username}
+              {currentUser.role === "ADMIN" && (
+                <span className="navbar__admin-badge">Admin</span>
+              )}
+            </span>
+          </li>
+        )}
+
+        <li className="navbar__logout">
+          <button
+            onClick={handleLogout}
+            className="navbar__link navbar__link--logout"
+          >
+            <LogOut size={16} />
+            Cerrar Sesión
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+};
+
+export default Navbar;

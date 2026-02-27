@@ -6,6 +6,10 @@ import { assignmentsApi } from '../../services/assignment';
 import { ticketApi } from '../../services/ticketApi';
 import { userService } from '../../services/user';
 
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ showToast: vi.fn() }),
+}));
+
 // Mock de la API de asignaciones
 vi.mock('../../services/assignment', () => ({
   assignmentsApi: {
@@ -44,10 +48,10 @@ vi.mock('../../components/common', () => ({
 }));
 
 // Mock de componentes secundarios
-vi.mock('../../components/TicketAssign', () => ({
+vi.mock('../../components/tickets/TicketAssign', () => ({
   default: () => <div data-testid="ticket-assign" />,
 }));
-vi.mock('../../components/ConfirmModal', () => ({
+vi.mock('../../components/ui/ConfirmModal', () => ({
   default: () => <div data-testid="confirm-modal" />,
 }));
 

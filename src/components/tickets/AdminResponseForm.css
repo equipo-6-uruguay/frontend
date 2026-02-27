@@ -1,0 +1,131 @@
+/* ── AdminResponseForm ── */
+.admin-response-form {
+  margin-top: 2rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-response-form-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.admin-response-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120px;
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--input-border);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background: var(--input-bg);
+  resize: vertical;
+  line-height: 1.6;
+  transition: all 0.3s ease;
+}
+
+.admin-response-textarea:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+  background: var(--card-bg);
+  box-shadow: var(--input-focus-shadow);
+}
+
+.admin-response-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.admin-response-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.admin-response-counter {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.admin-response-submit {
+  padding: 0.7rem 1.8rem;
+  background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.admin-response-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, #5558e3 0%, #2563eb 100%);
+}
+
+.admin-response-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.admin-response-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* ── Ticket closed notice ── */
+.ticket-closed-notice {
+  margin-top: 2rem;
+  padding: 1rem 1.5rem;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-left: 4px solid var(--color-text-muted);
+  border-radius: 12px;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.ticket-closed-notice p {
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .admin-response-form {
+    padding: 1.2rem;
+    margin-top: 1.5rem;
+  }
+
+  .admin-response-textarea {
+    min-height: 100px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .admin-response-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .admin-response-counter {
+    text-align: right;
+  }
+
+  .admin-response-submit {
+    width: 100%;
+    text-align: center;
+  }
+}

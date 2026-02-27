@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import TicketDetail from '../../pages/tickets/TicketDetail';
 import { ticketApi } from '../../services/ticketApi';
-import { authService } from '../../services/auth';
 import type { Ticket, TicketResponse } from '../../types/ticket';
 
 // ---------------------------------------------------------------------------
@@ -31,12 +30,15 @@ vi.mock('../../services/ticketApi', () => ({
   },
 }));
 
-vi.mock('../../services/auth', () => ({
-  authService: {
-    getCurrentUser: vi.fn(),
-    isAuthenticated: vi.fn(),
-    isAdmin: vi.fn(),
-  },
+// Mock AuthContext — the component uses useAuth() for authentication state
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: vi.fn(),
+}));
+
+// Mock ToastContext — the component uses useToast() for notifications
+export const mockShowToast = vi.fn();
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ showToast: mockShowToast }),
 }));
 
 vi.mock('../../components/common', () => ({
@@ -53,6 +55,26 @@ vi.mock('../../components/common', () => ({
     </div>
   ),
 }));
+
+import { useAuth } from '../../context/AuthContext';
+
+// ---------------------------------------------------------------------------
+// Auth helper — builds the return value for useAuth mock
+// ---------------------------------------------------------------------------
+
+const mockUseAuth = (overrides: Partial<ReturnType<typeof useAuth>> = {}) => {
+  vi.mocked(useAuth).mockReturnValue({
+    user: null,
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    refreshUser: vi.fn(),
+    isAuthenticated: true,
+    isAdmin: false,
+    ...overrides,
+  });
+};
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -101,7 +123,7 @@ const renderTicketDetail = (ticketId = '42') => {
 };
 
 // ---------------------------------------------------------------------------
-// Tests — RED phase (TDD)
+// Tests
 // ---------------------------------------------------------------------------
 
 // ===========================================================================
@@ -111,16 +133,11 @@ const renderTicketDetail = (ticketId = '42') => {
 describe('TicketDetail — HU-1.2: Visualización de prioridad', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(authService.getCurrentUser).mockReturnValue({
-      id: 'user-123',
-      email: 'user@test.com',
-      username: 'testuser',
-      role: 'USER',
-      is_active: true,
-      created_at: '2026-01-01T00:00:00Z',
+    mockUseAuth({
+      user: { id: 'user-123', email: 'user@test.com', username: 'testuser', role: 'USER', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+      isAuthenticated: true,
+      isAdmin: false,
     });
-    vi.mocked(authService.isAuthenticated).mockReturnValue(true);
-    vi.mocked(authService.isAdmin).mockReturnValue(false);
     vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
   });
 
@@ -170,16 +187,11 @@ describe('TicketDetail — HU-3.1: Sección Respuestas', () => {
     vi.clearAllMocks();
 
     // Default: authenticated user is the ticket creator
-    vi.mocked(authService.getCurrentUser).mockReturnValue({
-      id: 'user-123',
-      email: 'user@test.com',
-      username: 'testuser',
-      role: 'USER',
-      is_active: true,
-      created_at: '2026-01-01T00:00:00Z',
+    mockUseAuth({
+      user: { id: 'user-123', email: 'user@test.com', username: 'testuser', role: 'USER', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+      isAuthenticated: true,
+      isAdmin: false,
     });
-    vi.mocked(authService.isAuthenticated).mockReturnValue(true);
-    vi.mocked(authService.isAdmin).mockReturnValue(false);
   });
 
   // -----------------------------------------------------------------------
@@ -265,15 +277,11 @@ describe('TicketDetail — HU-3.1: Sección Respuestas', () => {
   // -----------------------------------------------------------------------
   describe('cuando el usuario no es creador ni admin', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue({
-        id: 'user-999',
-        email: 'otro@test.com',
-        username: 'otrousuario',
-        role: 'USER',
-        is_active: true,
-        created_at: '2026-01-01T00:00:00Z',
+      mockUseAuth({
+        user: { id: 'user-999', email: 'otro@test.com', username: 'otrousuario', role: 'USER', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+        isAuthenticated: true,
+        isAdmin: false,
       });
-      vi.mocked(authService.isAdmin).mockReturnValue(false);
 
       vi.mocked(ticketApi.getTicket).mockResolvedValue(mockTicket);
       // The API might reject, or the component might hide — either way, responses should NOT show
@@ -305,15 +313,11 @@ describe('TicketDetail — HU-3.1: Sección Respuestas', () => {
   // -----------------------------------------------------------------------
   describe('cuando el usuario es ADMIN (no creador)', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue({
-        id: 'admin-001',
-        email: 'admin@test.com',
-        username: 'adminuser',
-        role: 'ADMIN',
-        is_active: true,
-        created_at: '2026-01-01T00:00:00Z',
+      mockUseAuth({
+        user: { id: 'admin-001', email: 'admin@test.com', username: 'adminuser', role: 'ADMIN', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+        isAuthenticated: true,
+        isAdmin: true,
       });
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
 
       vi.mocked(ticketApi.getTicket).mockResolvedValue(mockTicket);
       vi.mocked(ticketApi.getResponses).mockResolvedValue(mockResponses);
@@ -391,8 +395,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('cuando ADMIN y ticket OPEN', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
     });
@@ -424,8 +427,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('cuando ADMIN y ticket IN_PROGRESS', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({
         ...mockTicket,
         status: 'IN_PROGRESS',
@@ -453,8 +455,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('cuando el usuario es USER (no ADMIN)', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(regularUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(false);
+      mockUseAuth({ user: regularUser, isAuthenticated: true, isAdmin: false });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
     });
@@ -482,8 +483,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('cuando ADMIN y ticket CLOSED', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({
         ...mockTicket,
         status: 'CLOSED',
@@ -522,8 +522,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('estado del botón Responder', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
     });
@@ -536,20 +535,20 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('se habilita al escribir texto en el textarea', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
         expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
       });
 
-      await user.type(screen.getByTestId('response-textarea'), 'Una respuesta válida');
+      fireEvent.change(screen.getByTestId('response-textarea'), {
+        target: { value: 'Una respuesta válida' },
+      });
 
       expect(screen.getByRole('button', { name: /responder/i })).toBeEnabled();
     });
 
     it('vuelve a deshabilitarse si el texto se borra', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
@@ -557,10 +556,10 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       });
 
       const textarea = screen.getByTestId('response-textarea');
-      await user.type(textarea, 'Texto');
+      fireEvent.change(textarea, { target: { value: 'Texto' } });
       expect(screen.getByRole('button', { name: /responder/i })).toBeEnabled();
 
-      await user.clear(textarea);
+      fireEvent.change(textarea, { target: { value: '' } });
       expect(screen.getByRole('button', { name: /responder/i })).toBeDisabled();
     });
   });
@@ -570,21 +569,21 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('límite de 2000 caracteres', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
     });
 
     it('actualiza el contador al escribir texto', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
         expect(screen.getByText('0 / 2000')).toBeInTheDocument();
       });
 
-      await user.type(screen.getByTestId('response-textarea'), 'Hola');
+      fireEvent.change(screen.getByTestId('response-textarea'), {
+        target: { value: 'Hola' },
+      });
 
       expect(screen.getByText('4 / 2000')).toBeInTheDocument();
     });
@@ -601,16 +600,14 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
     });
 
     it('muestra "2000 / 2000" al alcanzar el límite exacto', async () => {
-      const user = userEvent.setup();
       renderTicketDetail();
 
       await waitFor(() => {
         expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
       });
 
-      // userEvent type es lento para strings largos → usamos fireEvent
       const textarea = screen.getByTestId('response-textarea');
-      await user.type(textarea, 'a'.repeat(2000));
+      fireEvent.change(textarea, { target: { value: 'a'.repeat(2000) } });
 
       expect(screen.getByText('2000 / 2000')).toBeInTheDocument();
     });
@@ -621,8 +618,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('envío exitoso de respuesta', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
       vi.mocked(ticketApi.createResponse).mockResolvedValue(newResponse);
@@ -632,10 +628,9 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       await waitFor(() => {
         expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
       });
-      await user.type(
-        screen.getByTestId('response-textarea'),
-        'Esta es la nueva respuesta del admin',
-      );
+      fireEvent.change(screen.getByTestId('response-textarea'), {
+        target: { value: 'Esta es la nueva respuesta del admin' },
+      });
       await user.click(screen.getByRole('button', { name: /responder/i }));
     };
 
@@ -648,6 +643,7 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
         expect(ticketApi.createResponse).toHaveBeenCalledWith(
           42,
           'Esta es la nueva respuesta del admin',
+          'admin-001',
         );
       });
     });
@@ -687,14 +683,15 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       });
     });
 
-    it('muestra confirmación mediante window.alert', async () => {
+    it('muestra confirmación mediante Toast', async () => {
       const user = userEvent.setup();
       renderTicketDetail();
       await fillAndSubmit(user);
 
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalledWith(
+        expect(mockShowToast).toHaveBeenCalledWith(
           expect.stringMatching(/respuesta enviada|respuesta añadida/i),
+          'success'
         );
       });
     });
@@ -705,14 +702,13 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
   // -------------------------------------------------------------------------
   describe('error al enviar respuesta', () => {
     beforeEach(() => {
-      vi.mocked(authService.getCurrentUser).mockReturnValue(adminUser);
-      vi.mocked(authService.isAdmin).mockReturnValue(true);
+      mockUseAuth({ user: adminUser, isAuthenticated: true, isAdmin: true });
       vi.mocked(ticketApi.getTicket).mockResolvedValue({ ...mockTicket, status: 'OPEN' });
       vi.mocked(ticketApi.getResponses).mockResolvedValue([]);
       vi.mocked(ticketApi.createResponse).mockRejectedValue(new Error('Network Error'));
     });
 
-    it('muestra window.alert con mensaje de error si la API falla', async () => {
+    it('muestra Toast con mensaje de error si la API falla', async () => {
       const user = userEvent.setup();
       renderTicketDetail();
 
@@ -720,12 +716,15 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
         expect(screen.getByTestId('response-textarea')).toBeInTheDocument();
       });
 
-      await user.type(screen.getByTestId('response-textarea'), 'Una respuesta cualquiera');
+      fireEvent.change(screen.getByTestId('response-textarea'), {
+        target: { value: 'Una respuesta cualquiera' },
+      });
       await user.click(screen.getByRole('button', { name: /responder/i }));
 
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalledWith(
+        expect(mockShowToast).toHaveBeenCalledWith(
           expect.stringMatching(/error|no se pudo enviar/i),
+          'error'
         );
       });
     });
@@ -739,11 +738,11 @@ describe('TicketDetail — HU-3.2: Formulario de respuesta (solo ADMIN, ticket n
       });
 
       const textarea = screen.getByTestId('response-textarea') as HTMLTextAreaElement;
-      await user.type(textarea, 'Una respuesta cualquiera');
+      fireEvent.change(textarea, { target: { value: 'Una respuesta cualquiera' } });
       await user.click(screen.getByRole('button', { name: /responder/i }));
 
       await waitFor(() => {
-        expect(window.alert).toHaveBeenCalled();
+        expect(mockShowToast).toHaveBeenCalled();
       });
 
       expect(textarea.value).toBe('Una respuesta cualquiera');

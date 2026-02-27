@@ -1,107 +1,83 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useMatch } from 'react-router-dom';
-import { useSSE } from '../hooks/useSSE';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import Navbar from '../pages/navbar/NavBar';
-import TicketList from '../pages/tickets/TicketList';
-import CreateTicket from '../pages/tickets/CreateTicket';
-import TicketDetail from '../pages/tickets/TicketDetail';
-import NotificationList from '../pages/notifications/NotificationList';
-import AssignmentList from '../pages/assignments/AssignmentList';
-import Login from '../pages/auth/Login';
-import Register from '../pages/auth/Register';
-import ProtectedRoute from '../components/ProtectedRoute';
-import { useAuth } from '../context/AuthContext';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
+import Layout from '../components/layout/Layout';
+import { LoadingState } from '../components/common';
 
-/**
- * Monta la conexión SSE global para actualizar el badge de notificaciones.
- * Solo se activa en rutas autenticadas y cuando el usuario NO está en
- * TicketDetail (esa ruta ya abre su propia conexión SSE con callback de
- * refresco de respuestas), garantizando una única conexión EventSource.
- */
-const SSEGlobalListener = () => {
-  useSSE();
-  return null;
-};
-
-const Layout = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
-  // useMatch devuelve un objeto si la ruta actual coincide con el patrón.
-  const isTicketDetail = Boolean(useMatch('/tickets/:id'));
-  const { isAuthenticated } = useAuth();
-  const showProtectedUI = !isAuthPage && isAuthenticated;
-
-  return (
-    <>
-      {showProtectedUI && <Navbar />}
-      {/* SSE global: solo en rutas autenticadas que no sean TicketDetail */}
-      {showProtectedUI && !isTicketDetail && <SSEGlobalListener />}
-      {children}
-    </>
-  );
-};
+// Lazy-loaded pages
+const TicketList = lazy(() => import('../pages/tickets/TicketList'));
+const CreateTicket = lazy(() => import('../pages/tickets/CreateTicket'));
+const TicketDetail = lazy(() => import('../pages/tickets/TicketDetail'));
+const NotificationList = lazy(() => import('../pages/notifications/NotificationList'));
+const AssignmentList = lazy(() => import('../pages/assignments/AssignmentList'));
+const Login = lazy(() => import('../pages/auth/Login'));
+const Register = lazy(() => import('../pages/auth/Register'));
+const NotFound = lazy(() => import('../pages/NotFound'));
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Layout>
-        <Routes>
-          {/* Autenticación */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+        <Suspense fallback={<LoadingState message="Cargando página..." />}>
+          <Routes>
+            {/* Autenticación */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          {/* Redirección inicial */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Redirección inicial */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* Tickets - Protegido para usuarios autenticados */}
-          <Route 
-            path="/tickets" 
-            element={
-              <ProtectedRoute>
-                <TicketList />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/tickets/new" 
-            element={
-              <ProtectedRoute>
-                <CreateTicket />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/tickets/:id" 
-            element={
-              <ProtectedRoute>
-                <TicketDetail />
-              </ProtectedRoute>
-            } 
-          />
+            {/* Tickets - Protegido para usuarios autenticados */}
+            <Route 
+              path="/tickets" 
+              element={
+                <ProtectedRoute>
+                  <TicketList />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tickets/new" 
+              element={
+                <ProtectedRoute>
+                  <CreateTicket />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tickets/:id" 
+              element={
+                <ProtectedRoute>
+                  <TicketDetail />
+                </ProtectedRoute>
+              } 
+            />
 
-          {/* Notificaciones - Solo ADMIN */}
-          <Route 
-            path="/notifications" 
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <NotificationList />
-              </ProtectedRoute>
-            } 
-          />
+            {/* Notificaciones - Solo ADMIN */}
+            <Route 
+              path="/notifications" 
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <NotificationList />
+                </ProtectedRoute>
+              } 
+            />
 
-          {/* Asignaciones - Solo ADMIN */}
-          <Route 
-            path="/assignments" 
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <AssignmentList />
-              </ProtectedRoute>
-            } 
-          />
+            {/* Asignaciones - Solo ADMIN */}
+            <Route 
+              path="/assignments" 
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AssignmentList />
+                </ProtectedRoute>
+              } 
+            />
 
-          {/* Ruta no encontrada */}
-          <Route path="*" element={<h2>404 - Página no encontrada</h2>} />
-        </Routes>
+            {/* Ruta no encontrada */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </Layout>
     </BrowserRouter>
   );

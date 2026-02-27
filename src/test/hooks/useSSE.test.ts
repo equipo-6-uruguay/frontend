@@ -21,8 +21,22 @@ import { useSSE } from '../../hooks/useSSE';
 
 const mockRefreshUnread = vi.fn();
 
-vi.mock('../../context/NotificacionContext', () => ({
+vi.mock('../../context/NotificationContext', () => ({
   useNotifications: () => ({ trigger: 0, refreshUnread: mockRefreshUnread }),
+}));
+
+// useSSE now calls useAuth() to get the user context for authentication
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: '1', username: 'admin', email: 'admin@test.com', role: 'ADMIN', is_active: true, created_at: '2026-01-01T00:00:00Z' },
+    isAuthenticated: true,
+    isAdmin: true,
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    refreshUser: vi.fn(),
+  }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -54,7 +68,7 @@ describe('useSSE — HU-2.2: Conexión SSE de notificaciones', () => {
     renderHook(() => useSSE());
 
     const url = MockEventSource.latest().url;
-    expect(url).toMatch(/\/notifications\/stream\//);
+    expect(url).toMatch(/\/api\/notifications\/sse\//);
   });
 
   it('cierra la conexión EventSource al desmontar el hook', () => {
@@ -66,7 +80,7 @@ describe('useSSE — HU-2.2: Conexión SSE de notificaciones', () => {
   });
 
   it('registra el handler de onerror sin lanzar excepciones', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
 
     const { unmount } = renderHook(() => useSSE());
 

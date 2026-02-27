@@ -1,13 +1,7 @@
-import type { User } from '../types/auth';
+import type { AdminUser } from '../types/user';
 import { usersApiClient } from './axiosConfig';
 
-export interface AdminUser {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-  is_active: boolean;
-}
+export type { AdminUser };
 
 export const userService = {
   /**
