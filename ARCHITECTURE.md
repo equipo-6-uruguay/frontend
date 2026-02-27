@@ -30,6 +30,7 @@
 | Build tool | Vite | 7.x |
 | Routing | React Router DOM | 7.x |
 | HTTP Client | Axios | 1.x |
+| Iconos | lucide-react | 0.x |
 | Testing | Vitest + Testing Library | 1.x / 16.x |
 | Linter | ESLint | 9.x |
 | Servidor de producción | Nginx (Alpine) | 1.27 |
@@ -75,7 +76,7 @@ Migrar a una arquitectura limpia orientada a **Feature-Sliced Design** aportará
 │   styles/        → Sistema de diseño y estilos globales              │
 ├──────────────────────────────────────────────────────────────────────┤
 │                        ESTADO Y ORQUESTACIÓN                         │
-│   context/       → Providers globales (Auth, Notifications, Toast)   │
+│   context/       → Providers globales (Auth, Notifications, Toast, Theme) │
 │   hooks/         → Custom hooks (useFetch, useSSE, useTicketDetail)  │
 ├──────────────────────────────────────────────────────────────────────┤
 │                          DOMINIO (NEGOCIO)                           │
@@ -162,7 +163,8 @@ src/
 │   ├── ticket.ts                   ← Ticket, CreateTicketDTO, TicketResponse
 │   ├── auth.ts                     ← User, LoginRequest, AuthResponse
 │   ├── assignment.ts               ← Assignment, UpdateAssignedUserDTO
-│   └── notification.ts             ← Notification
+│   ├── notification.ts             ← Notification
+│   └── user.ts                     ← AdminUser (separado de services)
 │
 ├── services/                       ← ADAPTADORES HTTP (patrón Adapter)
 │   ├── axiosConfig.ts              ← 4 clientes Axios + interceptores + refresh
@@ -175,7 +177,8 @@ src/
 ├── context/                        ← ESTADO GLOBAL
 │   ├── AuthContext.tsx              ← Login/Logout/Register + sesión
 │   ├── NotificationContext.tsx      ← 🆕 Trigger para refrescar badge
-│   └── ToastContext.tsx             ← 🆕 Reemplaza window.alert
+│   ├── ToastContext.tsx             ← 🆕 Reemplaza window.alert
+│   └── ThemeContext.tsx             ← 🆕 Dark/Light mode con persistencia
 │
 ├── hooks/                          ← CUSTOM HOOKS
 │   ├── useFetch.ts                 ← Fetch genérico con AbortController
@@ -219,8 +222,9 @@ src/
 │       └── NotificationList.tsx / .css
 │
 ├── routes/
-│   └── AppRouter.tsx               ← Rutas con ProtectedRoute guards
+│   └── AppRouter.tsx               ← Rutas con React.lazy + Suspense + guards
 ├── styles/
+│   └── index.css                   ← Design tokens (CSS custom properties) + dark mode
 ├── test/                           ← Tests organizados por capa y feature
 ├── utils/
 │   └── dateFormat.ts
@@ -251,7 +255,8 @@ Contratos de datos que definen la interfaz entre capas:
 | `TicketResponse` | `id`, `ticket_id`, `admin_id`, `admin_name`, `text`, `created_at` |
 | `User` | `id`, `email`, `username`, `role` (ADMIN/USER), `is_active` |
 | `Assignment` | `id`, `ticket_id`, `priority`, `assigned_at`, `assigned_to?` |
-| `Notification` | `id`, `title`, `message`, `read`, `createdAt` |
+| `Notification` | `id` (number), `title`, `message`, `read`, `createdAt` |
+| `AdminUser` | `id`, `username`, `email`, `role`, `is_active` |
 
 ### 5.3 Capa de Servicios (`services/`) — Patrón Adapter
 
@@ -263,7 +268,7 @@ Backend DTO (snake_case)  →  Adapter Function  →  Frontend Type (camelCase)
 
 **Ejemplo en `notification.ts`:**
 - El backend devuelve `{ id: number, ticket_id: string, sent_at: string }`.
-- El adaptador `adaptNotification()` transforma a `{ id: string, title: "Ticket #X", createdAt: string }`.
+- El adaptador `adaptNotification()` transforma a `{ id: number, title: "Ticket #X", createdAt: string }`.
 - La UI **nunca** ve la estructura raw del backend.
 
 **Infraestructura HTTP (`axiosConfig.ts`):**
@@ -283,13 +288,14 @@ Backend DTO (snake_case)  →  Adapter Function  →  Frontend Type (camelCase)
 | `AuthContext` | Estado global de sesión (login, logout, register, refreshUser). Cookies HttpOnly. Expone `isAuthenticated` e `isAdmin`. |
 | `NotificationContext` | Contador trigger para refrescar el badge de notificaciones (incrementado por SSE o acciones del usuario). |
 | `ToastContext` | Sistema de notificaciones visuales no-bloqueantes con auto-dismiss (4s). Tipos: success, error, info. Reemplaza `window.alert`. |
-| `useFetch` | Hook genérico: ejecuta un fetch con `AbortController` al montar + cleanup automático. |
+| `ThemeContext` | 🆕 Gestión de tema oscuro/claro. Persiste preferencia en localStorage. Aplica `data-theme` en `<html>`. |
+| `useFetch` | Hook genérico: ejecuta un fetch con `AbortController` al montar + cleanup automático. Usa `useRef` para callbacks estables. |
 | `useSSE` | Hook que abre conexión `EventSource` con el `notification-service`. Al recibir evento, refresca badge y opcionalmente recarga respuestas del ticket activo. |
 | `useTicketDetail` | Hook compuesto: carga ticket + respuestas en paralelo (`Promise.all`), expone `appendResponse` para optimistic updates y `fetchResponses` para SSE-driven refreshes. |
 
 **Jerarquía de Providers en `App.tsx`:**
 ```
-ToastProvider → AuthProvider → AppRouter
+ThemeProvider → ToastProvider → AuthProvider → NotificationProvider → AppRouter
 ```
 
 ### 5.5 Capa de Presentación (`components/` + `pages/`)
@@ -307,6 +313,16 @@ ToastProvider → AuthProvider → AppRouter
 | `TicketDetail` | `/tickets/:id` | Autenticado |
 | `NotificationList` | `/notifications` | Solo ADMIN |
 | `AssignmentList` | `/assignments` | Solo ADMIN |
+| `NotFound` | `*` (wildcard) | Público |
+
+**Route-based code splitting:**
+- Todas las páginas se cargan con `React.lazy()` + `<Suspense>` para code splitting.
+- Cada página genera un chunk JS independiente en el build de producción.
+
+**Sistema de Diseño:**
+- CSS custom properties (design tokens) definidos en `index.css`.
+- Dark mode soportado via `[data-theme="dark"]` selector.
+- Iconografía unificada con `lucide-react` en toda la aplicación.
 
 **Layout inteligente:**
 - `Layout.tsx` muestra `Navbar` y `SSEGlobalListener` solo en rutas autenticadas.
