@@ -1,35 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ticketApi } from '../../services/ticketApi';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import type { Ticket, TicketPriority } from '../../types/ticket';
 import TicketItem from '../../components/tickets/TicketItem';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import { LoadingState, EmptyState, PageHeader } from '../../components/common';
+import { useFetch } from '../../hooks/useFetch';
 import './TicketList.css';
 
 const TicketList = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  useEffect(() => {
-    ticketApi.getTickets()
-      .then((data) => {
-        if (user && user.role === 'USER') {
-          const userTickets = data.filter(ticket => String(ticket.user_id) === String(user.id));
-          setTickets(userTickets);
-        } else {
-          setTickets(data);
-        }
-      })
-      .catch((error) => {
-        console.error('Error al cargar tickets:', error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [user]);
+  useFetch(
+    () => ticketApi.getTickets(),
+    (data) => {
+      if (user && user.role === 'USER') {
+        const userTickets = data.filter(ticket => String(ticket.user_id) === String(user.id));
+        setTickets(userTickets);
+      } else {
+        setTickets(data);
+      }
+      setLoading(false);
+    },
+    (error) => {
+      console.error('Error al cargar tickets:', error);
+      setLoading(false);
+    }
+  );
 
   const handleDelete = (id: number) => {
     setDeleteId(id);
@@ -40,9 +42,10 @@ const TicketList = () => {
     try {
       await ticketApi.deleteTicket(deleteId);
       setTickets((prev) => prev.filter((t) => t.id !== deleteId));
+      showToast('Ticket eliminado correctamente', 'success');
     } catch (error) {
       console.error('Error al eliminar el ticket:', error);
-      alert('No se pudo eliminar el ticket');
+      showToast('No se pudo eliminar el ticket', 'error');
     } finally {
       setDeleteId(null);
     }
@@ -62,7 +65,7 @@ const TicketList = () => {
     );
   } catch (error) {
     console.error('Error actualizando estado', error);
-    alert('No se pudo actualizar el estado');
+    showToast('No se pudo actualizar el estado', 'error');
   }
 };
 
@@ -77,7 +80,7 @@ const TicketList = () => {
       );
     } catch (error) {
       console.error('Error actualizando prioridad', error);
-      alert('No se pudo actualizar la prioridad');
+      showToast('No se pudo actualizar la prioridad', 'error');
     }
   };
 
@@ -123,4 +126,3 @@ const TicketList = () => {
 };
 
 export default TicketList;
-

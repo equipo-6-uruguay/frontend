@@ -1,22 +1,27 @@
 import { useState, useEffect } from 'react';
 import { userService } from '../../services/user';
-import type { AdminUser } from '../../services/user';
+import type { AdminUser } from '../../types/user';
 import './TicketAssign.css';
 
 interface TicketAssignProps {
   ticketId?: number | string;
   currentAssignedId?: string;
   onAssign?: (userId: string) => void;
+  /** Pre-loaded admin users. If provided, skips the fetch. */
+  adminUsersList?: AdminUser[];
 }
 
-const TicketAssign = ({ ticketId, currentAssignedId, onAssign }: TicketAssignProps) => {
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+const TicketAssign = ({ ticketId, currentAssignedId, onAssign, adminUsersList }: TicketAssignProps) => {
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(adminUsersList ?? []);
   const [selectedUserId, setSelectedUserId] = useState<string>(currentAssignedId || '');
   const [pendingAssignment, setPendingAssignment] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!adminUsersList);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Skip fetch if admin users were provided as prop
+    if (adminUsersList) return;
+
     const fetchAdminUsers = async () => {
       try {
         setLoading(true);
@@ -32,7 +37,7 @@ const TicketAssign = ({ ticketId, currentAssignedId, onAssign }: TicketAssignPro
     };
 
     fetchAdminUsers();
-  }, []);
+  }, [adminUsersList]);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const userId = e.target.value;
@@ -66,7 +71,7 @@ const TicketAssign = ({ ticketId, currentAssignedId, onAssign }: TicketAssignPro
     return (
       <div className="ticket-assign">
         <label className="ticket-assign__label">Asignar a:</label>
-        <p className="ticket-assign__info" style={{ color: '#ef4444' }}>
+        <p className="ticket-assign__info text-error">
           {error}
         </p>
       </div>

@@ -7,6 +7,7 @@ import {
   canManagePriority,
   ASSIGNABLE_PRIORITY_OPTIONS,
 } from '../../domain/tickets/priorityRules';
+import { Trash2, Calendar } from 'lucide-react';
 import './TicketItem.css';
 
 interface Props {
@@ -73,17 +74,16 @@ const TicketItem = ({ ticket, onDelete, onUpdateStatus, onUpdatePriority }: Prop
         </div>
         <p className="ticket-description">{ticket.description}</p>
         <div className="ticket-date">
-          <span className="calendar-icon">📅</span>
+          <Calendar size={14} className="calendar-icon" />
           <small className="created-at">{formatDate(ticket.created_at)}</small>
         </div>
       </div>
 
       <div className="ticket-footer">
         <span
-          className={`status-badge ${ticket.status.toLowerCase()}${canChangeStatus ? ' status-badge--clickable' : ''}`}
+          className={`status-badge ${ticket.status.toLowerCase()}${canChangeStatus ? ' status-badge--clickable cursor-pointer' : ' cursor-default'}`}
           onClick={canChangeStatus ? handleStatusClick : (e) => e.stopPropagation()}
           title={canChangeStatus ? 'Cambiar estado' : ticket.status}
-          style={{ cursor: canChangeStatus ? 'pointer' : 'default' }}
         >
           {ticket.status}
         </span>
@@ -117,7 +117,7 @@ const TicketItem = ({ ticket, onDelete, onUpdateStatus, onUpdatePriority }: Prop
           onClick={handleDeleteClick}
           title="Eliminar ticket"
         >
-          <span className="icon">🗑️</span>
+          <Trash2 size={14} />
           Eliminar
         </button>
       </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { LogIn, AlertCircle } from 'lucide-react';
 import './Auth.css';
 
 const Login = () => {
@@ -48,20 +49,7 @@ const Login = () => {
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-icon">
-            <svg
-              width="40"
-              height="40"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-              <polyline points="10 17 15 12 10 7" />
-              <line x1="15" y1="12" x2="3" y2="12" />
-            </svg>
+            <LogIn size={32} />
           </div>
           <h1 className="auth-title">Bienvenido a TicketSystem</h1>
           <p className="auth-subtitle">Inicia sesión en tu cuenta</p>
@@ -70,18 +58,7 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="auth-form">
           {error && (
             <div className="auth-error">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
+              <AlertCircle size={14} />
               {error}
             </div>
           )}

@@ -1,10 +1,11 @@
 import type { Notification } from '../../types/notification';
+import { formatDate } from '../../utils/dateFormat';
 import './NotificationItem.css';
 
 interface NotificationItemProps {
   notification: Notification;
-  onMarkAsRead: (id: string) => void;
-  onDelete: (id: string) => void;
+  onMarkAsRead: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
 const NotificationItem = ({
@@ -25,15 +26,7 @@ const NotificationItem = ({
 
         <div className="notification-footer">
           <div className="time-info">
-            <span className="calendar-icon">📅</span>
-            <small className="time-text">
-              {new Date(createdAt).toLocaleString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                day: '2-digit',
-                month: '2-digit',
-              })}
-            </small>
+            <small className="time-text">{formatDate(createdAt)}</small>
           </div>
 
           <div className="actions">

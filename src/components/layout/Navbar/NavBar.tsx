@@ -3,11 +3,14 @@ import { useEffect, useState, useCallback } from "react";
 import { notificationsApi } from "../../../services/notification";
 import { useNotifications } from "../../../context/NotificationContext";
 import { useAuth } from "../../../context/AuthContext";
+import { useTheme } from "../../../context/ThemeContext";
+import { Bell, ClipboardList, PlusCircle, User, LogOut, Sun, Moon, ListChecks } from "lucide-react";
 import "./NavBar.css";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { trigger } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -74,6 +77,7 @@ const Navbar = () => {
             }
             onClick={closeMenu}
           >
+            <ClipboardList size={16} />
             Tickets
           </NavLink>
         </li>
@@ -86,6 +90,7 @@ const Navbar = () => {
             }
             onClick={closeMenu}
           >
+            <PlusCircle size={16} />
             Crear Ticket
           </NavLink>
         </li>
@@ -99,7 +104,8 @@ const Navbar = () => {
               }
               onClick={closeMenu}
             >
-              🔔 Notificaciones
+              <Bell size={16} />
+              Notificaciones
               {unreadCount > 0 && (
                 <span className="navbar__badge">{unreadCount}</span>
               )}
@@ -116,15 +122,28 @@ const Navbar = () => {
               }
               onClick={closeMenu}
             >
+              <ListChecks size={16} />
               Asignaciones
             </NavLink>
           </li>
         )}
 
+        <li className="navbar__actions">
+          <button
+            className="navbar__theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Cambiar a modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
+            title={`Modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </li>
+
         {currentUser && (
           <li className="navbar__user">
             <span className="navbar__username">
-              👤 {currentUser.username}
+              <User size={16} />
+              {currentUser.username}
               {currentUser.role === "ADMIN" && (
                 <span className="navbar__admin-badge">Admin</span>
               )}
@@ -137,6 +156,7 @@ const Navbar = () => {
             onClick={handleLogout}
             className="navbar__link navbar__link--logout"
           >
+            <LogOut size={16} />
             Cerrar Sesión
           </button>
         </li>

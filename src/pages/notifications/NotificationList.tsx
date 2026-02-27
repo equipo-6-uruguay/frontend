@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useFetch } from '../../hooks/useFetch';
 import { notificationsApi } from '../../services/notification';
 import { useNotifications } from '../../context/NotificationContext';
+import { useToast } from '../../context/ToastContext';
 import { LoadingState, EmptyState, PageHeader } from '../../components/common';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import NotificationItem from '../../components/notifications/NotificationItem';
@@ -10,6 +11,7 @@ import './NotificationList.css';
 
 const NotificationList = () => {
   const { trigger, refreshUnread } = useNotifications();
+  const { showToast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,10 +19,12 @@ const NotificationList = () => {
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     message: string;
+    confirmLabel: string;
     onConfirm: () => void;
   }>({
     isOpen: false,
     message: '',
+    confirmLabel: 'Eliminar',
     onConfirm: () => {},
   });
 
@@ -61,7 +65,7 @@ const NotificationList = () => {
     }
   }, [trigger]);
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleMarkAsRead = async (id: number) => {
     try {
       await notificationsApi.markAsRead(id);
       loadNotifications();
@@ -75,24 +79,27 @@ const NotificationList = () => {
     setModalState({
       isOpen: true,
       message: '¿Seguro que deseas eliminar todas las notificaciones?',
+      confirmLabel: 'Limpiar todo',
       onConfirm: async () => {
         setModalState((prev) => ({ ...prev, isOpen: false }));
         try {
           await notificationsApi.clearAll();
           setNotifications([]);
           refreshUnread();
+          showToast('Notificaciones eliminadas', 'success');
         } catch (error) {
           console.error('Error eliminando notificaciones', error);
-          alert('No se pudieron eliminar las notificaciones');
+          showToast('No se pudieron eliminar las notificaciones', 'error');
         }
       },
     });
   };
 
-  const confirmDelete = (id: string) => {
+  const confirmDelete = (id: number) => {
     setModalState({
       isOpen: true,
       message: '¿Seguro que deseas eliminar esta notificación?',
+      confirmLabel: 'Eliminar',
       onConfirm: async () => {
         setModalState((prev) => ({ ...prev, isOpen: false }));
         try {
@@ -101,7 +108,7 @@ const NotificationList = () => {
           refreshUnread();
         } catch (error) {
           console.error('Error eliminando notificación', error);
-          alert('No se pudo eliminar la notificación');
+          showToast('No se pudo eliminar la notificación', 'error');
         }
       }
     });
@@ -143,6 +150,7 @@ const NotificationList = () => {
       {modalState.isOpen && (
         <ConfirmModal
           message={modalState.message}
+          confirmLabel={modalState.confirmLabel}
           onConfirm={modalState.onConfirm}
           onCancel={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
         />

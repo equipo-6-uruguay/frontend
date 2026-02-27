@@ -7,9 +7,9 @@
 
 /* Estilo de la Tarjeta */
 .assignment-card {
-  background: #ffffff;
+  background: var(--card-bg);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--card-border);
   border-left: 4px solid #6366f1;
   border-radius: 16px;
   padding: 1.8rem;
@@ -17,14 +17,14 @@
   flex-direction: column;
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .assignment-card:hover {
   transform: translateX(8px);
-  background-color: #f8fafc;
+  background-color: var(--card-hover-bg);
   border-color: rgba(102, 126, 234, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .assignment-badge {
@@ -61,7 +61,7 @@
   box-shadow: 0 4px 10px rgba(148, 163, 184, 0.3);
 }
 
-/* Header del ticket dentro de la tarjeta: badge #id + título */
+/* Header del ticket dentro de la tarjeta */
 .assignment-ticket-header {
   display: flex;
   align-items: center;
@@ -84,7 +84,7 @@
 }
 
 .assignment-title {
-  color: #1e293b;
+  color: var(--color-text-primary);
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0;
@@ -93,7 +93,7 @@
 }
 
 .assignment-message {
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 0.95rem;
   line-height: 1.6;
   margin-bottom: 2rem;
@@ -104,12 +104,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border-light);
   padding-top: 1.2rem;
 }
 
 .assignment-date {
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
   display: flex;
   align-items: center;
@@ -140,7 +140,7 @@
   gap: 0.75rem;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border-light);
 }
 
 .assignment-actions .ticket-assign {

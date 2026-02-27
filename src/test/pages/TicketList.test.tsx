@@ -11,6 +11,10 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ showToast: vi.fn() }),
+}));
+
 vi.mock('../../services/ticketApi', () => ({
   ticketApi: {
     getTickets: vi.fn(),

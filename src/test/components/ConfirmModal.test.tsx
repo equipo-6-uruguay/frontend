@@ -103,4 +103,30 @@ describe('ConfirmModal', () => {
 
     expect(onCancel).not.toHaveBeenCalled();
   });
+
+  it('renders custom confirmLabel when provided', () => {
+    render(
+      <ConfirmModal
+        message="¿Limpiar todo?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+        confirmLabel="Limpiar todo"
+      />
+    );
+
+    expect(screen.getByText('Limpiar todo')).toBeInTheDocument();
+    expect(screen.queryByText('Eliminar')).not.toBeInTheDocument();
+  });
+
+  it('defaults confirmLabel to Eliminar', () => {
+    render(
+      <ConfirmModal
+        message="¿Está seguro?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Eliminar')).toBeInTheDocument();
+  });
 });

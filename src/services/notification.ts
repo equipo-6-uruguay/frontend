@@ -12,7 +12,7 @@ interface NotificationApiResponse {
 
 // Adapter function
 const adaptNotification = (apiData: NotificationApiResponse): Notification => ({
-  id: apiData.id.toString(),
+  id: apiData.id,
   title: `Ticket #${apiData.ticket_id}`,
   message: apiData.message,
   read: apiData.read,
@@ -25,7 +25,7 @@ export const notificationsApi = {
     return data.map(adaptNotification);
   },
 
-  async markAsRead(id: string, signal?: AbortSignal): Promise<void> {
+  async markAsRead(id: number, signal?: AbortSignal): Promise<void> {
     await notificationApiClient.patch(`/notifications/${id}/read/`, {}, { signal });
   },
 
@@ -33,7 +33,7 @@ export const notificationsApi = {
     await notificationApiClient.delete('/notifications/clear/', { signal });
   },
 
-  async deleteNotification(id: string, signal?: AbortSignal): Promise<void> {
+  async deleteNotification(id: number, signal?: AbortSignal): Promise<void> {
     await notificationApiClient.delete(`/notifications/${id}/`, { signal });
   },
 };

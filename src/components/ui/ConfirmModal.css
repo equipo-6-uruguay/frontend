@@ -11,13 +11,13 @@
 }
 
 .confirm-modal {
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 20px;
   padding: 2rem 2.5rem;
   max-width: 400px;
   width: 90%;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-lg);
   animation: scaleIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -28,7 +28,7 @@
 
 .confirm-message {
   font-size: 1rem;
-  color: #334155;
+  color: var(--color-text-primary);
   line-height: 1.6;
   margin: 0 0 1.5rem 0;
 }
@@ -51,14 +51,14 @@
 }
 
 .confirm-btn--cancel {
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
 }
 
 .confirm-btn--cancel:hover {
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .confirm-btn--delete {
