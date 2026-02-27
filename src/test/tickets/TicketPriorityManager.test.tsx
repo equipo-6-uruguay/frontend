@@ -401,7 +401,7 @@ describe('TicketPriorityManager — gestión manual de prioridad (HU-2.x)', () =
       await waitFor(() => {
         const errorDiv = screen.getByRole('alert');
         expect(errorDiv).toBeInTheDocument();
-        expect(errorDiv).toHaveStyle({ color: '#dc2626' });
+        expect(errorDiv).toHaveClass('error-alert');
       });
     });
 

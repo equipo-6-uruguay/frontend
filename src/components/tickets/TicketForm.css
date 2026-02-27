@@ -5,10 +5,10 @@
   max-width: 600px;
   margin: 2rem auto;
   padding: 2.5rem;
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.1);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--card-border);
 }
 
 .form-group {
@@ -20,7 +20,7 @@
 .form-label {
   font-weight: 600;
   font-size: 0.95rem;
-  color: #1e293b;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -29,11 +29,11 @@
 .form-input,
 .form-textarea {
   padding: 0.875rem 1rem;
-  border: 2px solid rgba(0, 0, 0, 0.08);
+  border: 2px solid var(--input-border);
   border-radius: 12px;
   font-size: 0.95rem;
-  color: #1e293b;
-  background: #f8fafc;
+  color: var(--color-text-primary);
+  background: var(--input-bg);
   transition: all 0.3s ease;
   font-family: inherit;
 }
@@ -41,9 +41,9 @@
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #6366f1;
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  border-color: var(--input-focus-border);
+  background: var(--card-bg);
+  box-shadow: var(--input-focus-shadow);
 }
 
 .form-textarea {

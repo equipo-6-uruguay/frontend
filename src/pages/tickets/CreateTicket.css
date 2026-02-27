@@ -12,7 +12,6 @@
 .create-ticket-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #1e293b;
   margin: 0 0 0.5rem 0;
   background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
   -webkit-background-clip: text;
@@ -22,7 +21,7 @@
 
 .create-ticket-subtitle {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
   margin: 0;
   font-weight: 400;
 }

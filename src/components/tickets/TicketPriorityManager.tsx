@@ -100,17 +100,7 @@ const TicketPriorityManager = ({ ticket, onUpdate }: TicketPriorityManagerProps)
       </div>
 
       {apiError && (
-        <div
-          role="alert"
-          style={{
-            color: '#dc2626',
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            padding: '0.75rem 1rem',
-            margin: '0.5rem 0',
-          }}
-        >
+        <div className="error-alert" role="alert">
           {apiError}
         </div>
       )}

@@ -1,11 +1,11 @@
 /* ── TicketPriorityManager ── */
 .priority-manager {
   margin-top: 1.5rem;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: 1.5rem 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -20,16 +20,16 @@
 .priority-manager__field label {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #1e293b;
+  color: var(--color-text-primary);
 }
 
 .priority-manager__field select {
   padding: 0.6rem 1rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #1e293b;
-  background: #f8fafc;
-  border: 2px solid rgba(0, 0, 0, 0.08);
+  color: var(--color-text-primary);
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
   border-radius: 12px;
   cursor: pointer;
   font-family: inherit;
@@ -38,17 +38,17 @@
 
 .priority-manager__field select:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  border-color: var(--input-focus-border);
+  box-shadow: var(--input-focus-shadow);
 }
 
 .priority-manager__field textarea {
   padding: 0.75rem 1rem;
   font-size: 0.9rem;
   font-family: inherit;
-  color: #1e293b;
-  background: #f8fafc;
-  border: 2px solid rgba(0, 0, 0, 0.08);
+  color: var(--color-text-primary);
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
   border-radius: 12px;
   resize: vertical;
   line-height: 1.5;
@@ -57,13 +57,13 @@
 
 .priority-manager__field textarea:focus {
   outline: none;
-  border-color: #6366f1;
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  border-color: var(--input-focus-border);
+  background: var(--card-bg);
+  box-shadow: var(--input-focus-shadow);
 }
 
 .priority-manager__field textarea::placeholder {
-  color: #94a3b8;
+  color: var(--color-text-muted);
 }
 
 .priority-manager button[type="submit"] {

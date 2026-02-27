@@ -5,9 +5,11 @@ interface ConfirmModalProps {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Label for the confirm button. Defaults to "Eliminar". */
+  confirmLabel?: string;
 }
 
-const ConfirmModal = ({ message, onConfirm, onCancel }: ConfirmModalProps) => {
+const ConfirmModal = ({ message, onConfirm, onCancel, confirmLabel = 'Eliminar' }: ConfirmModalProps) => {
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -27,7 +29,7 @@ const ConfirmModal = ({ message, onConfirm, onCancel }: ConfirmModalProps) => {
             Cancelar
           </button>
           <button className="confirm-btn confirm-btn--delete" onClick={onConfirm}>
-            Eliminar
+            {confirmLabel}
           </button>
         </div>
       </div>

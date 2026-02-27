@@ -48,17 +48,7 @@ const CreateTicket = () => {
       </div>
 
       {error && (
-        <div
-          className="error-message"
-          style={{
-            backgroundColor: "#fee2e2",
-            border: "1px solid #ef4444",
-            color: "#dc2626",
-            padding: "12px",
-            borderRadius: "8px",
-            marginBottom: "16px",
-          }}
-        >
+        <div className="error-alert" role="alert">
           {error}
         </div>
       )}

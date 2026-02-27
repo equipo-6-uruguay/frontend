@@ -16,6 +16,10 @@ vi.mock('../../context/NotificationContext', () => ({
   useNotifications: () => ({ trigger: 0, refreshUnread: vi.fn() }),
 }));
 
+vi.mock('../../context/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn(), isDark: false }),
+}));
+
 const mockUseAuth = (overrides: Partial<ReturnType<typeof useAuth>> = {}) => {
   vi.mocked(useAuth).mockReturnValue({
     user: null,

@@ -1,25 +1,148 @@
+/* ============================================
+   Design Tokens — CSS Custom Properties
+   ============================================ */
 :root {
+  /* Typography */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light;
-  color: #213547;
-  background-color: #ffffff;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Color scheme */
+  color-scheme: light;
+
+  /* Surface colors */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f8fafc;
+  --color-bg-tertiary: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8fafc;
+
+  /* Text colors */
+  --color-text-primary: #213547;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* Border colors */
+  --color-border: #e2e8f0;
+  --color-border-light: rgba(0, 0, 0, 0.08);
+
+  /* Brand / Accent */
+  --color-primary: #667eea;
+  --color-primary-dark: #5a6fd6;
+  --color-primary-light: rgba(102, 126, 234, 0.1);
+  --color-accent: #764ba2;
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* Status colors */
+  --color-success: #16a34a;
+  --color-success-bg: rgba(34, 197, 94, 0.12);
+  --color-warning: #b45309;
+  --color-warning-bg: rgba(234, 179, 8, 0.15);
+  --color-error: #dc2626;
+  --color-error-bg: #fef2f2;
+  --color-error-border: #fecaca;
+  --color-error-text: #dc2626;
+  --color-info: #2563eb;
+  --color-info-bg: rgba(37, 99, 235, 0.1);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+
+  /* Navbar */
+  --navbar-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --navbar-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+
+  /* Cards */
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --card-hover-bg: #f8fafc;
+
+  /* Inputs */
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --input-focus-border: #667eea;
+  --input-focus-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* ============================================
+   Dark Mode
+   ============================================ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surface colors */
+  --color-bg: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-tertiary: #334155;
+  --color-surface: #1e293b;
+  --color-surface-hover: #334155;
+
+  /* Text colors */
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #0f172a;
+
+  /* Border colors */
+  --color-border: #334155;
+  --color-border-light: rgba(255, 255, 255, 0.08);
+
+  /* Brand / Accent */
+  --color-primary: #818cf8;
+  --color-primary-dark: #6366f1;
+  --color-primary-light: rgba(129, 140, 248, 0.15);
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* Status colors */
+  --color-success: #22c55e;
+  --color-success-bg: rgba(34, 197, 94, 0.15);
+  --color-warning: #eab308;
+  --color-warning-bg: rgba(234, 179, 8, 0.15);
+  --color-error: #f87171;
+  --color-error-bg: rgba(239, 68, 68, 0.12);
+  --color-error-border: rgba(239, 68, 68, 0.3);
+  --color-error-text: #f87171;
+  --color-info: #60a5fa;
+  --color-info-bg: rgba(96, 165, 250, 0.15);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  /* Navbar */
+  --navbar-bg: linear-gradient(135deg, #4c63b6 0%, #5b3a7a 100%);
+  --navbar-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  /* Cards */
+  --card-bg: #1e293b;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-hover-bg: #334155;
+
+  /* Inputs */
+  --input-bg: #1e293b;
+  --input-border: #475569;
+  --input-focus-border: #818cf8;
+  --input-focus-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--color-primary);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--color-primary-dark);
 }
 
 body {
@@ -27,8 +150,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
-
 
 button {
   border-radius: 8px;
@@ -37,15 +162,40 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #f9f9f9;
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s, color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--color-primary);
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* ============================================
+   Utility Classes
+   ============================================ */
+.error-alert {
+  color: var(--color-error-text);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.text-error {
+  color: var(--color-error-text);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-default {
+  cursor: default;
+}

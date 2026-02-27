@@ -6,6 +6,10 @@ import { assignmentsApi } from '../../services/assignment';
 import { ticketApi } from '../../services/ticketApi';
 import { userService } from '../../services/user';
 
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ showToast: vi.fn() }),
+}));
+
 // Mock de la API de asignaciones
 vi.mock('../../services/assignment', () => ({
   assignmentsApi: {

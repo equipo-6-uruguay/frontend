@@ -46,7 +46,7 @@ describe('notificationsApi', () => {
       expect(notificationApiClient.get).toHaveBeenCalledTimes(1);
       expect(result).toEqual([
         {
-          id: '5',
+          id: 5,
           title: 'Ticket #42',
           message: 'New ticket assigned',
           read: false,
@@ -60,7 +60,7 @@ describe('notificationsApi', () => {
     it('patches notification as read', async () => {
       vi.mocked(notificationApiClient.patch).mockResolvedValue({});
 
-      await notificationsApi.markAsRead('5');
+      await notificationsApi.markAsRead(5);
 
       expect(notificationApiClient.patch).toHaveBeenCalledWith('/notifications/5/read/', {}, { signal: undefined });
     });
@@ -80,7 +80,7 @@ describe('notificationsApi', () => {
     it('deletes a single notification', async () => {
       vi.mocked(notificationApiClient.delete).mockResolvedValue({});
 
-      await notificationsApi.deleteNotification('5');
+      await notificationsApi.deleteNotification(5);
 
       expect(notificationApiClient.delete).toHaveBeenCalledWith('/notifications/5/', { signal: undefined });
     });
