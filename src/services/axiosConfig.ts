@@ -6,11 +6,51 @@ import axios, {
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
+  _retryCount?: number;
 }
+
+const parseEnvNumber = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+};
+
+const API_TIMEOUT_MS = parseEnvNumber(import.meta.env.VITE_API_TIMEOUT_MS, 10000);
+const GET_RETRY_ATTEMPTS = parseEnvNumber(import.meta.env.VITE_API_GET_RETRIES, 2);
+const GET_RETRY_DELAY_MS = parseEnvNumber(import.meta.env.VITE_API_GET_RETRY_DELAY_MS, 750);
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const shouldRetryGetRequest = (
+  error: AxiosError,
+  config?: RetryableRequestConfig,
+): config is RetryableRequestConfig => {
+  if (!config || config.method?.toUpperCase() !== 'GET') {
+    return false;
+  }
+
+  const attempts = config._retryCount ?? 0;
+  if (attempts >= GET_RETRY_ATTEMPTS) {
+    return false;
+  }
+
+  if (error.code === 'ERR_CANCELED') {
+    return false;
+  }
+
+  const status = error.response?.status;
+  const isTimeout = error.code === 'ECONNABORTED';
+  const isNetworkError = error.code === 'ERR_NETWORK' || !error.response;
+  const isTemporaryServerError = status !== undefined && [502, 503, 504].includes(status);
+
+  return isTimeout || isNetworkError || isTemporaryServerError;
+};
 /** Client for ticket-service */
 export const ticketApiClient = axios.create({
   baseURL: import.meta.env.VITE_TICKET_SERVICE_URL ?? 'http://localhost:8000/api',
-  timeout: 10000,
+  timeout: API_TIMEOUT_MS,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -18,7 +58,7 @@ export const ticketApiClient = axios.create({
 /** Client for notification-service */
 export const notificationApiClient = axios.create({
   baseURL: import.meta.env.VITE_NOTIFICATION_SERVICE_URL ?? 'http://localhost:8001/api',
-  timeout: 10000,
+  timeout: API_TIMEOUT_MS,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -26,7 +66,7 @@ export const notificationApiClient = axios.create({
 /** Client for assignment-service */
 export const assignmentApiClient = axios.create({
   baseURL: import.meta.env.VITE_ASSIGNMENT_SERVICE_URL ?? 'http://localhost:8002/api',
-  timeout: 10000,
+  timeout: API_TIMEOUT_MS,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -34,7 +74,7 @@ export const assignmentApiClient = axios.create({
 /** Client for users-service */
 export const usersApiClient = axios.create({
   baseURL: import.meta.env.VITE_USERS_SERVICE_URL ?? 'http://localhost:8003/api',
-  timeout: 10000,
+  timeout: API_TIMEOUT_MS,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -62,7 +102,14 @@ let refreshPromise: Promise<void> | null = null;
  */
 const refreshAuthCookie = async (): Promise<void> => {
   const usersBaseURL = import.meta.env.VITE_USERS_SERVICE_URL ?? 'http://localhost:8003/api';
-  await axios.post(`${usersBaseURL}/auth/refresh/`, {}, { withCredentials: true });
+  await axios.post(
+    `${usersBaseURL}/auth/refresh/`,
+    {},
+    {
+      withCredentials: true,
+      timeout: API_TIMEOUT_MS,
+    },
+  );
 };
 /**
  * Attach request/response interceptors to an axios client.
@@ -91,6 +138,13 @@ const attachInterceptors = (client: AxiosInstance): void => {
           return Promise.reject(error);
         }
       }
+
+      if (shouldRetryGetRequest(error, originalRequest)) {
+        originalRequest._retryCount = (originalRequest._retryCount ?? 0) + 1;
+        await wait(GET_RETRY_DELAY_MS * originalRequest._retryCount);
+        return client(originalRequest);
+      }
+
       return logError(error);
     },
   );

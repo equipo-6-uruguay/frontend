@@ -41,18 +41,37 @@ const AssignmentList = () => {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [agentMap, setAgentMap] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const loadAssignments = async () => {
     try {
       setLoading(true);
+      setLoadError(false);
 
-      // Fetch assignments, tickets y agentes concurrentemente
-      const [assignmentsData, ticketsData, adminUsersData] = await Promise.all([
+      // Fetch assignments, tickets y agentes concurrentemente.
+      // Solo las asignaciones son críticas; tickets y usuarios enriquecen la UI.
+      const [assignmentsResult, ticketsResult, adminUsersResult] = await Promise.allSettled([
         assignmentsApi.getAssignments(),
         ticketApi.getTickets(),
-        userService.getAdminUsers().catch(() => [] as AdminUser[]),
+        userService.getAdminUsers(),
       ]);
+
+      if (assignmentsResult.status === 'rejected') {
+        throw assignmentsResult.reason;
+      }
+
+      const assignmentsData = assignmentsResult.value;
+      const ticketsData = ticketsResult.status === 'fulfilled' ? ticketsResult.value : [];
+      const adminUsersData = adminUsersResult.status === 'fulfilled' ? adminUsersResult.value : [];
+
+      if (ticketsResult.status === 'rejected') {
+        console.error('No se pudieron cargar los tickets para enriquecer asignaciones', ticketsResult.reason);
+      }
+
+      if (adminUsersResult.status === 'rejected') {
+        console.error('No se pudieron cargar los agentes para enriquecer asignaciones', adminUsersResult.reason);
+      }
 
       // Mapa de id → título de ticket para enriquecer las tarjetas
       const ticketTitleMap = new Map(ticketsData.map(t => [t.id.toString(), t.title]));
@@ -62,9 +81,12 @@ const AssignmentList = () => {
       setAgentMap(newAgentMap);
       setAdminUsers(adminUsersData);
 
-      // Filter out assignments for tickets that don't exist anymore
+      // Si tickets no respondió, mostramos las asignaciones igualmente con fallback de título.
+      const hasTicketContext = ticketsResult.status === 'fulfilled';
       const activeTicketIds = new Set(ticketsData.map(t => t.id.toString()));
-      const validAssignments = assignmentsData.filter(a => activeTicketIds.has(a.ticket_id.toString()));
+      const validAssignments = hasTicketContext
+        ? assignmentsData.filter(a => activeTicketIds.has(a.ticket_id.toString()))
+        : assignmentsData;
 
       // Build a set of closed ticket IDs to pre-mark as completed
       const closedTicketIds = new Set(
@@ -82,7 +104,9 @@ const AssignmentList = () => {
         }))
       );
     } catch (error) {
+      setLoadError(true);
       console.error('Error cargando asignaciones', error);
+      showToast('No se pudieron cargar las asignaciones. Intenta nuevamente.', 'error');
     } finally {
       setLoading(false);
     }
@@ -183,7 +207,11 @@ const AssignmentList = () => {
 
       {assignments.length === 0 ? (
         <EmptyState
-          message="¡Estás al día! No tienes asignaciones pendientes."
+          message={
+            loadError
+              ? 'No se pudieron cargar las asignaciones.'
+              : '¡Estás al día! No tienes asignaciones pendientes.'
+          }
           icon="check_circle"
         />
       ) : (

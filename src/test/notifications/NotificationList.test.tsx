@@ -122,7 +122,7 @@ describe('NotificationList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+      expect(screen.getByText('No se pudieron cargar las notificaciones.')).toBeInTheDocument();
     });
 
     consoleSpy.mockRestore();
