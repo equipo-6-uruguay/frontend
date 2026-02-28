@@ -10,6 +10,10 @@ interface AssignmentApiResponse {
   assigned_to?: string;
 }
 
+interface PaginatedAssignmentsResponse {
+  results: AssignmentApiResponse[];
+}
+
 // Adapter function
 const adaptAssignment = (apiData: AssignmentApiResponse): Assignment => ({
   id: apiData.id,
@@ -19,10 +23,27 @@ const adaptAssignment = (apiData: AssignmentApiResponse): Assignment => ({
   assigned_to: apiData.assigned_to,
 });
 
+const normalizeAssignmentsPayload = (
+  data: AssignmentApiResponse[] | PaginatedAssignmentsResponse,
+): AssignmentApiResponse[] => {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (data && Array.isArray(data.results)) {
+    return data.results;
+  }
+
+  throw new TypeError('Formato inválido de asignaciones');
+};
+
 export const assignmentsApi = {
   async getAssignments(signal?: AbortSignal): Promise<Assignment[]> {
-    const { data } = await assignmentApiClient.get<AssignmentApiResponse[]>('/assignments/', { signal });
-    return data.map(adaptAssignment);
+    const { data } = await assignmentApiClient.get<AssignmentApiResponse[] | PaginatedAssignmentsResponse>(
+      '/assignments/',
+      { signal },
+    );
+    return normalizeAssignmentsPayload(data).map(adaptAssignment);
   },
 
   async deleteAssignment(id: number, signal?: AbortSignal): Promise<void> {

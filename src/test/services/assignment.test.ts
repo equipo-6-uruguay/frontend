@@ -56,6 +56,21 @@ describe('assignmentsApi', () => {
       expect(result).toEqual([expectedAssignment]);
     });
 
+    it('supports paginated assignment responses', async () => {
+      vi.mocked(assignmentApiClient.get).mockResolvedValue({
+        data: {
+          count: 1,
+          next: null,
+          previous: null,
+          results: [apiResponse],
+        },
+      });
+
+      const result = await assignmentsApi.getAssignments();
+
+      expect(result).toEqual([expectedAssignment]);
+    });
+
     it('passes AbortSignal when provided', async () => {
       const controller = new AbortController();
       vi.mocked(assignmentApiClient.get).mockResolvedValue({ data: [] });
@@ -63,6 +78,12 @@ describe('assignmentsApi', () => {
       await assignmentsApi.getAssignments(controller.signal);
 
       expect(assignmentApiClient.get).toHaveBeenCalledWith('/assignments/', { signal: controller.signal });
+    });
+
+    it('throws when assignment payload has an unexpected shape', async () => {
+      vi.mocked(assignmentApiClient.get).mockResolvedValue({ data: { detail: 'unexpected' } });
+
+      await expect(assignmentsApi.getAssignments()).rejects.toThrow('Formato inválido de asignaciones');
     });
   });
 

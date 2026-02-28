@@ -165,12 +165,13 @@ describe('AssignmentList', () => {
     vi.mocked(assignmentsApi.getAssignments).mockRejectedValue(new Error('API Error'));
     renderComponent();
     await waitFor(() => {
-      expect(screen.queryByTestId('loading-state')).not.toBeInTheDocument();
+      expect(screen.getByText('No se pudieron cargar las asignaciones.')).toBeInTheDocument();
     });
     consoleSpy.mockRestore();
   });
 
   it('sigue funcionando si el servicio de usuarios falla', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(assignmentsApi.getAssignments).mockResolvedValue(mockAssignments);
     vi.mocked(userService.getAdminUsers).mockRejectedValue(new Error('Users service down'));
     renderComponent();
@@ -178,5 +179,21 @@ describe('AssignmentList', () => {
     await waitFor(() => {
       expect(screen.getByText('Error en login')).toBeInTheDocument();
     });
+    consoleSpy.mockRestore();
+  });
+
+  it('sigue mostrando asignaciones si el servicio de tickets falla', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(assignmentsApi.getAssignments).mockResolvedValue(mockAssignments);
+    vi.mocked(ticketApi.getTickets).mockRejectedValue(new Error('Tickets service down'));
+
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Ticket #100')).toBeInTheDocument();
+      expect(screen.getByText('Ticket #101')).toBeInTheDocument();
+    });
+
+    consoleSpy.mockRestore();
   });
 });

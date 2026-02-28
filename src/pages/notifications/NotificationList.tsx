@@ -14,6 +14,7 @@ const NotificationList = () => {
   const { showToast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   // Modal State
   const [modalState, setModalState] = useState<{
@@ -34,10 +35,12 @@ const NotificationList = () => {
   const loadNotifications = async (signal?: AbortSignal) => {
     try {
       const data = await notificationsApi.getNotifications(signal);
+      setLoadError(false);
       setNotifications(data);
     } catch (error) {
       // Ignorar errores de cancelación (AbortError)
       if ((error as Error).name !== 'AbortError') {
+        setLoadError(true);
         console.error('Error cargando notificaciones', error);
       }
     } finally {
@@ -49,10 +52,12 @@ const NotificationList = () => {
   useFetch(
     (signal) => notificationsApi.getNotifications(signal),
     (data) => {
+      setLoadError(false);
       setNotifications(data);
       setLoading(false);
     },
     (error) => {
+      setLoadError(true);
       console.error('Error cargando notificaciones', error);
       setLoading(false);
     }
@@ -133,7 +138,13 @@ const NotificationList = () => {
       />
 
       {notifications.length === 0 ? (
-        <EmptyState message="No tienes notificaciones." />
+        <EmptyState
+          message={
+            loadError
+              ? 'No se pudieron cargar las notificaciones.'
+              : 'No tienes notificaciones.'
+          }
+        />
       ) : (
         <div className="notifications-list">
           {notifications.map((notification) => (
