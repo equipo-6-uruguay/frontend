@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFetch } from '../../hooks/useFetch';
 import { notificationsApi } from '../../services/notification';
 import { useNotifications } from '../../context/NotificationContext';
@@ -15,6 +15,7 @@ const NotificationList = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const skipNextReload = useRef(false);
 
   // Modal State
   const [modalState, setModalState] = useState<{
@@ -66,6 +67,10 @@ const NotificationList = () => {
   // Recargar notificaciones cuando trigger cambie (por ej. después de acciones del usuario)
   useEffect(() => {
     if (trigger > 0) {
+      if (skipNextReload.current) {
+        skipNextReload.current = false;
+        return;
+      }
       loadNotifications();
     }
   }, [trigger]);
@@ -90,6 +95,7 @@ const NotificationList = () => {
         try {
           await notificationsApi.clearAll();
           setNotifications([]);
+          skipNextReload.current = true;
           refreshUnread();
           showToast('Notificaciones eliminadas', 'success');
         } catch (error) {
