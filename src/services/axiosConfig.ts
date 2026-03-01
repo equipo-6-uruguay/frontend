@@ -116,6 +116,11 @@ const refreshAuthCookie = async (): Promise<void> => {
  * On 401 errors, waits for a single in-flight refresh and retries the request.
  * If refresh fails, redirects to /login.
  */
+const isAuthEndpoint = (url?: string): boolean => {
+  if (!url) return false;
+  return url.includes('/auth/me') || url.includes('/auth/refresh');
+};
+
 const attachInterceptors = (client: AxiosInstance): void => {
   client.interceptors.request.use(logRequest);
   client.interceptors.response.use(
@@ -123,7 +128,13 @@ const attachInterceptors = (client: AxiosInstance): void => {
     async (error: AxiosError) => {
       const originalRequest = error.config as RetryableRequestConfig | undefined;
 
-      if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      // Skip refresh logic for auth-checking endpoints to avoid infinite loop
+      if (
+        error.response?.status === 401 &&
+        originalRequest &&
+        !originalRequest._retry &&
+        !isAuthEndpoint(originalRequest.url)
+      ) {
         originalRequest._retry = true;
         try {
           if (!refreshPromise) {
@@ -134,7 +145,10 @@ const attachInterceptors = (client: AxiosInstance): void => {
           await refreshPromise;
           return client(originalRequest);
         } catch {
-          window.location.href = '/login';
+          // Only redirect if not already on /login to avoid reload loop
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
           return Promise.reject(error);
         }
       }
