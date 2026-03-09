@@ -34,6 +34,20 @@ const mockUser = {
   created_at: '2026-01-01T00:00:00Z',
 };
 
+/** Build a JSON:API-shaped response matching what parseJsonApiUser expects */
+const toJsonApiResponse = (user: { id: string; username: string; email: string; role: string; is_active: boolean; created_at: string }) => ({
+  data: {
+    id: user.id,
+    attributes: {
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      is_active: user.is_active,
+      created_at: user.created_at,
+    },
+  },
+});
+
 /** Helper to consume AuthContext in tests */
 const AuthConsumer = () => {
   const { user, loading, isAuthenticated, isAdmin, login, logout, register } = useAuth();
@@ -74,7 +88,7 @@ describe('AuthContext', () => {
   });
 
   it('loads user from /auth/me/ on mount', async () => {
-    vi.mocked(usersApiClient.get).mockResolvedValue({ data: mockUser });
+    vi.mocked(usersApiClient.get).mockResolvedValue({ data: toJsonApiResponse(mockUser) });
 
     render(
       <AuthProvider>
@@ -92,7 +106,7 @@ describe('AuthContext', () => {
 
   it('login calls /auth/login/ and sets user', async () => {
     vi.mocked(usersApiClient.get).mockRejectedValue(new Error('Unauthorized'));
-    vi.mocked(usersApiClient.post).mockResolvedValue({ data: { user: mockUser } });
+    vi.mocked(usersApiClient.post).mockResolvedValue({ data: toJsonApiResponse(mockUser) });
 
     const user = userEvent.setup();
     render(
@@ -119,7 +133,7 @@ describe('AuthContext', () => {
 
   it('register calls /auth/ and sets user', async () => {
     vi.mocked(usersApiClient.get).mockRejectedValue(new Error('Unauthorized'));
-    vi.mocked(usersApiClient.post).mockResolvedValue({ data: { user: mockUser } });
+    vi.mocked(usersApiClient.post).mockResolvedValue({ data: toJsonApiResponse(mockUser) });
 
     const user = userEvent.setup();
     render(
@@ -146,7 +160,7 @@ describe('AuthContext', () => {
   });
 
   it('logout calls /auth/logout/ and clears user', async () => {
-    vi.mocked(usersApiClient.get).mockResolvedValue({ data: mockUser });
+    vi.mocked(usersApiClient.get).mockResolvedValue({ data: toJsonApiResponse(mockUser) });
     vi.mocked(usersApiClient.post).mockResolvedValue({});
 
     const user = userEvent.setup();
@@ -169,7 +183,7 @@ describe('AuthContext', () => {
 
   it('isAdmin is true when user role is ADMIN', async () => {
     const adminUser = { ...mockUser, role: 'ADMIN' as const };
-    vi.mocked(usersApiClient.get).mockResolvedValue({ data: adminUser });
+    vi.mocked(usersApiClient.get).mockResolvedValue({ data: toJsonApiResponse(adminUser) });
 
     render(
       <AuthProvider>
