@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LogIn, AlertCircle } from 'lucide-react';
+import { isAxiosError } from 'axios';
 import './Auth.css';
 
 const Login = () => {
@@ -27,7 +28,15 @@ const Login = () => {
       navigate('/tickets', { replace: true });
     } catch (err: unknown) {
       console.error('Login error:', err);
-      if (err instanceof Error && err.message) {
+      if (isAxiosError(err)) {
+        if (err.response?.status === 401) {
+          setError('El usuario y/o contraseña son incorrectos.');
+        } else if (err.response?.data?.errors?.[0]?.detail) {
+          setError(err.response.data.errors[0].detail);
+        } else {
+          setError('Ocurrió un error al iniciar sesión. Intenta nuevamente.');
+        }
+      } else if (err instanceof Error && err.message) {
         setError(err.message);
       } else {
         setError('Error al iniciar sesión. Intenta nuevamente.');

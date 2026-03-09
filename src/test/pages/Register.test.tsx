@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { AxiosError, AxiosHeaders } from 'axios';
 import Register from '../../pages/auth/Register';
 import { useAuth } from '../../context/AuthContext';
 
@@ -55,6 +56,7 @@ describe('Register Page', () => {
     expect(screen.getByLabelText('Contraseña')).toBeInTheDocument();
     expect(screen.getByLabelText(/confirmar contraseña/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /crear cuenta/i })).toBeInTheDocument();
+    expect(screen.getByText('Mínimo 8 caracteres, 1 mayúscula y 1 símbolo')).toBeInTheDocument();
   });
 
   it('shows error when passwords do not match', async () => {
@@ -122,5 +124,28 @@ describe('Register Page', () => {
     renderRegister();
 
     expect(screen.getByText(/iniciar sesión/i)).toBeInTheDocument();
+  });
+
+  it('displays specific validation message from the backend on 422 AxiosError', async () => {
+    const axiosError = new AxiosError('Request failed with status code 422', '422', undefined, undefined, {
+      status: 422,
+      statusText: 'Unprocessable Entity',
+      data: { errors: [{ detail: 'Password must contain at least one uppercase letter.' }] },
+      headers: {},
+      config: { headers: new AxiosHeaders() }
+    });
+    mockRegister.mockRejectedValue(axiosError);
+    const user = userEvent.setup();
+    renderRegister();
+
+    await user.type(screen.getByLabelText(/nombre de usuario/i), 'newuser');
+    await user.type(screen.getByLabelText(/correo electrónico/i), 'dup@test.com');
+    await user.type(screen.getByLabelText('Contraseña'), 'password123');
+    await user.type(screen.getByLabelText(/confirmar contraseña/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /crear cuenta/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Password must contain at least one uppercase letter.')).toBeInTheDocument();
+    });
   });
 });

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { UserPlus, AlertCircle } from 'lucide-react';
+import { isAxiosError } from 'axios';
 import './Auth.css';
 
 const Register = () => {
@@ -41,7 +42,15 @@ const Register = () => {
       navigate('/tickets', { replace: true });
     } catch (err: unknown) {
       console.error('Register error:', err);
-      if (err instanceof Error && err.message) {
+      if (isAxiosError(err)) {
+        if (err.response?.status === 409) {
+          setError('El usuario o el correo ya están registrados.');
+        } else if (err.response?.data?.errors?.[0]?.detail) {
+          setError(err.response.data.errors[0].detail);
+        } else {
+          setError('Ocurrió un error al crear la cuenta. Intenta nuevamente.');
+        }
+      } else if (err instanceof Error && err.message) {
         setError(err.message);
       } else {
         setError('Error al crear la cuenta. Intenta nuevamente.');
@@ -129,7 +138,7 @@ const Register = () => {
                 minLength={8}
                 required
               />
-              <span className="form-hint">Mínimo 8 caracteres</span>
+              <span className="form-hint">Mínimo 8 caracteres, 1 mayúscula y 1 símbolo</span>
             </div>
 
             <div className="form-group">

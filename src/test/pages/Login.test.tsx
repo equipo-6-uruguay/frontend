@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { AxiosError, AxiosHeaders } from 'axios';
 import Login from '../../pages/auth/Login';
 import { useAuth } from '../../context/AuthContext';
 
@@ -105,6 +106,28 @@ describe('Login Page', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Error al iniciar sesión. Intenta nuevamente.')).toBeInTheDocument();
+    });
+  });
+
+  it('displays friendly message on 401 AxiosError', async () => {
+    const axiosError = new AxiosError('Request failed with status code 401', '401', undefined, undefined, {
+      status: 401,
+      statusText: 'Unauthorized',
+      data: {},
+      headers: {},
+      config: { headers: new AxiosHeaders() }
+    });
+    mockLogin.mockRejectedValue(axiosError);
+    const user = userEvent.setup();
+
+    renderLogin();
+
+    await user.type(screen.getByLabelText(/correo electrónico/i), 'test@test.com');
+    await user.type(screen.getByLabelText(/contraseña/i), 'wrong');
+    await user.click(screen.getByRole('button', { name: /iniciar sesión/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('El usuario y/o contraseña son incorrectos.')).toBeInTheDocument();
     });
   });
 });
