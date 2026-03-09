@@ -28,10 +28,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const parseJsonApiUser = (responseData: { data: { id: string; attributes: Omit<User, 'id'> } }): User => ({
+    id: responseData.data.id,
+    ...responseData.data.attributes,
+  });
+
   const refreshUser = useCallback(async () => {
     try {
-      const { data } = await usersApiClient.get<User>('/auth/me/');
-      setUser(data);
+      const { data } = await usersApiClient.get('/auth/me/');
+      setUser(parseJsonApiUser(data));
     } catch {
       setUser(null);
     }
@@ -42,20 +47,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser]);
 
   const login = async (email: string, password: string): Promise<void> => {
-    const { data } = await usersApiClient.post<{ user: User }>('/auth/login/', {
-      email,
-      password,
-    });
-    setUser(data.user);
+    const { data } = await usersApiClient.post('/auth/login/', { email, password });
+    setUser(parseJsonApiUser(data));
   };
 
   const register = async (username: string, email: string, password: string): Promise<void> => {
-    const { data } = await usersApiClient.post<{ user: User }>('/auth/', {
-      username,
-      email,
-      password,
-    });
-    setUser(data.user);
+    const { data } = await usersApiClient.post('/auth/', { username, email, password });
+    setUser(parseJsonApiUser(data));
   };
 
   const logout = async (): Promise<void> => {
