@@ -32,13 +32,41 @@ describe('userService', () => {
   });
 
   describe('getUsersByRole', () => {
-    it('fetches users by ADMIN role', async () => {
+    it('fetches users by ADMIN role (flat array fallback)', async () => {
       vi.mocked(usersApiClient.get).mockResolvedValue({ data: mockAdmins });
 
       const result = await userService.getUsersByRole('ADMIN');
 
       expect(usersApiClient.get).toHaveBeenCalledWith('/auth/by-role/ADMIN/');
       expect(result).toEqual(mockAdmins);
+    });
+
+    it('fetches users by ADMIN role (JSON:API format)', async () => {
+      const jsonApiMock = {
+        data: {
+          data: [
+            {
+              id: '2',
+              type: 'users',
+              attributes: {
+                username: 'admin2',
+                email: 'admin2@test.com',
+                role: 'ADMIN',
+                is_active: true,
+              },
+            },
+          ],
+        },
+      };
+
+      vi.mocked(usersApiClient.get).mockResolvedValue(jsonApiMock);
+
+      const result = await userService.getUsersByRole('ADMIN');
+
+      expect(usersApiClient.get).toHaveBeenCalledWith('/auth/by-role/ADMIN/');
+      expect(result).toEqual([
+        { id: '2', username: 'admin2', email: 'admin2@test.com', role: 'ADMIN', is_active: true },
+      ]);
     });
 
     it('fetches users by USER role', async () => {
