@@ -197,7 +197,7 @@ const AssignmentList = () => {
   return (
     <div className="page-container">
       <PageHeader
-        title="Mis Asignaciones"
+        title="Asignaciones"
         subtitle={
           <p className="ticket-count">
             Tienes {assignments.length} tareas bajo tu cargo
