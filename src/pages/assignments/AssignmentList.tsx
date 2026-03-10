@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { assignmentsApi } from '../../services/assignment';
 import { ticketApi } from '../../services/ticketApi';
 import { userService } from '../../services/user';
@@ -44,7 +44,7 @@ const AssignmentList = () => {
   const [loadError, setLoadError] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const loadAssignments = async () => {
+  const loadAssignments = useCallback(async () => {
     try {
       setLoading(true);
       setLoadError(false);
@@ -110,11 +110,11 @@ const AssignmentList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     loadAssignments();
-  }, []);
+  }, [loadAssignments]);
 
   const handleManage = (id: number) => {
     setAssignments((prev) =>

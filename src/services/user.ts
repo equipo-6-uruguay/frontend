@@ -11,7 +11,7 @@ interface JsonApiUserResponse {
     attributes: Omit<AdminUser, 'id'> & { created_at?: string };
     links?: Record<string, string>;
   }>;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 export const userService = {
